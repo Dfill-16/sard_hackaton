@@ -2,6 +2,7 @@
 
 namespace App\Sard\Nodo;
 
+use App\Sard\Support\Tiempo;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -13,9 +14,20 @@ use Illuminate\Support\Facades\DB;
  */
 final class EstadoNodo
 {
+    /**
+     * Rol actual: `lider` o `seguidor`.
+     *
+     * Si aún no se ha guardado un rol válido, se deriva del líder registrado
+     * (o de SARD_LIDER_INICIAL): el nodo que coincide con el líder es `lider`.
+     */
     public function rol(): string
     {
-        return (string) (DB::table('nodo_estado')->where('clave', 'rol')->value('valor') ?? 'seguidor');
+        $rol = DB::table('nodo_estado')->where('clave', 'rol')->value('valor');
+        if ($rol === 'lider' || $rol === 'seguidor') {
+            return $rol;
+        }
+
+        return $this->lider() === config('sard.nodo_role') ? 'lider' : 'seguidor';
     }
 
     public function esLider(): bool
@@ -39,6 +51,26 @@ final class EstadoNodo
         return DB::table('nodo_estado')->where('clave', 'ultimo_latido')->value('valor');
     }
 
+    /** Segundos desde el último latido registrado; null si nunca hubo uno. */
+    public function ultimoLatidoHaceS(): ?int
+    {
+        $ultimo = $this->ultimoLatido();
+
+        return $ultimo === null ? null : (int) floor(max(0, Tiempo::desdeIso($ultimo)->diffInMilliseconds(Tiempo::ahora())) / 1000);
+    }
+
+    /** Registra ahora como último latido (recibido en el seguidor, confirmado en el líder). */
+    public function marcarLatido(): void
+    {
+        $this->guardar('ultimo_latido', Tiempo::iso());
+    }
+
+    /** Demo de aislamiento (T-013): el nodo deja de enviar y aceptar latidos y réplica. */
+    public function aislado(): bool
+    {
+        return $this->valor('aislado') === '1';
+    }
+
     /**
      * Marca al nodo como líder en una época dada.
      */
@@ -46,8 +78,19 @@ final class EstadoNodo
     {
         $this->guardarVarias([
             'rol' => 'lider',
+            'lider' => (string) config('sard.nodo_role'),
             'epoca' => (string) $epoca,
         ]);
+    }
+
+    public function valor(string $clave): ?string
+    {
+        return DB::table('nodo_estado')->where('clave', $clave)->value('valor');
+    }
+
+    public function guardar(string $clave, ?string $valor): void
+    {
+        DB::table('nodo_estado')->updateOrInsert(['clave' => $clave], ['valor' => $valor]);
     }
 
     /**

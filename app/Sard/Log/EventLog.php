@@ -4,6 +4,7 @@ namespace App\Sard\Log;
 
 use App\Sard\Nodo\EstadoNodo;
 use App\Sard\Proyeccion\Proyector;
+use App\Sard\Support\Tiempo;
 use App\Sard\Support\Uuid7;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -27,13 +28,20 @@ final class EventLog
 
     private EstadoNodo $estado;
 
-    private string $nodo;
+    /** Nodo fijado al construir (pruebas); si es null se lee NODE_ROLE al escribir cada evento. */
+    private ?string $nodoFijo;
 
     public function __construct(Proyector $proyector, EstadoNodo $estado, ?string $nodo = null)
     {
         $this->proyector = $proyector;
         $this->estado = $estado;
-        $this->nodo = $nodo ?? config('sard.nodo_role', 'A');
+        $this->nodoFijo = $nodo;
+    }
+
+    /** Nodo de origen de los eventos locales. */
+    public function nodo(): string
+    {
+        return $this->nodoFijo ?? (string) config('sard.nodo_role', 'A');
     }
 
     /**
@@ -44,16 +52,28 @@ final class EventLog
      */
     public function append(string $tipo, array $payload, ?string $refUuid = null): array
     {
+        // seq y hash_prev se leen dentro de la transacción (BEGIN IMMEDIATE en SQLite): así dos
+        // procesos del mismo nodo (servidor web y worker de cola) nunca toman el mismo seq.
+        return DB::transaction(fn (): array => $this->appendBloqueado($tipo, $payload, $refUuid));
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function appendBloqueado(string $tipo, array $payload, ?string $refUuid): array
+    {
+        $nodo = $this->nodo();
         $uuid = Uuid7::generar();
         $creadoEn = $this->fechaUtcAhora();
         $epoca = $this->estado->epoca();
 
-        $seq = $this->ultimoSeq($this->nodo) + 1;
-        $hashPrev = $this->ultimoHash($this->nodo) ?? self::HASH_GENESIS;
+        $seq = $this->ultimoSeq($nodo) + 1;
+        $hashPrev = $this->ultimoHash($nodo) ?? self::HASH_GENESIS;
 
         $contenido = [
             'uuid' => $uuid,
-            'nodo_origen' => $this->nodo,
+            'nodo_origen' => $nodo,
             'seq' => $seq,
             'epoca' => $epoca,
             'tipo' => $tipo,
@@ -65,7 +85,7 @@ final class EventLog
 
         $fila = [
             'uuid' => $uuid,
-            'nodo_origen' => $this->nodo,
+            'nodo_origen' => $nodo,
             'seq' => $seq,
             'epoca' => $epoca,
             'tipo' => $tipo,
@@ -76,10 +96,8 @@ final class EventLog
             'hash' => $hash,
         ];
 
-        DB::transaction(function () use ($fila, $contenido) {
-            DB::table('eventos')->insert($fila);
-            $this->proyector->aplicar($contenido);
-        });
+        DB::table('eventos')->insert($fila);
+        $this->proyector->aplicar($contenido);
 
         return $this->eventoArray($fila);
     }
@@ -96,15 +114,22 @@ final class EventLog
     {
         $this->validarEsquema($evento);
 
+        // El payload viaja como objeto JSON o como el texto guardado en `eventos`; el hash
+        // canónico se calcula siempre sobre el arreglo, igual que en append().
+        $payload = is_string($evento['payload']) ? json_decode($evento['payload'], true) : $evento['payload'];
+        if (! is_array($payload)) {
+            throw new InvalidArgumentException('Campo payload inválido: no es un objeto JSON.');
+        }
+
         $contenido = [
             'uuid' => $evento['uuid'],
             'nodo_origen' => $evento['nodo_origen'],
             'seq' => $evento['seq'],
             'epoca' => $evento['epoca'],
             'tipo' => $evento['tipo'],
-            'ref_uuid' => $evento['ref_uuid'],
+            'ref_uuid' => $evento['ref_uuid'] ?? null,
             'creado_en' => $evento['creado_en'],
-            'payload' => $evento['payload'],
+            'payload' => $payload,
         ];
 
         $hashCalculado = $this->hash($evento['hash_prev'], $contenido);
@@ -117,28 +142,43 @@ final class EventLog
             throw new RuntimeException('Hash inválido para el evento '.$evento['uuid']);
         }
 
-        $insertado = DB::table('eventos')->insertOrIgnore([
-            'uuid' => $evento['uuid'],
-            'nodo_origen' => $evento['nodo_origen'],
-            'seq' => $evento['seq'],
-            'epoca' => $evento['epoca'],
-            'tipo' => $evento['tipo'],
-            'ref_uuid' => $evento['ref_uuid'],
-            'creado_en' => $evento['creado_en'],
-            'payload' => is_string($evento['payload'])
-                ? $evento['payload']
-                : json_encode($evento['payload'], \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES),
-            'hash_prev' => $evento['hash_prev'],
-            'hash' => $evento['hash'],
-        ]);
+        return DB::transaction(function () use ($evento, $contenido, $payload): bool {
+            $insertado = DB::table('eventos')->insertOrIgnore([
+                'uuid' => $evento['uuid'],
+                'nodo_origen' => $evento['nodo_origen'],
+                'seq' => $evento['seq'],
+                'epoca' => $evento['epoca'],
+                'tipo' => $evento['tipo'],
+                'ref_uuid' => $contenido['ref_uuid'],
+                'creado_en' => $evento['creado_en'],
+                'payload' => json_encode($payload, \JSON_UNESCAPED_UNICODE | \JSON_UNESCAPED_SLASHES),
+                'hash_prev' => $evento['hash_prev'],
+                'hash' => $evento['hash'],
+            ]);
 
-        if (! $insertado) {
-            return false;
-        }
+            if (! $insertado) {
+                return false;
+            }
 
-        $this->proyector->aplicar($contenido);
+            $this->proyector->aplicar($contenido);
 
-        return true;
+            return true;
+        });
+    }
+
+    /**
+     * Último seq por nodo de origen (punto de sincronía para la réplica y la unión).
+     *
+     * @return array<string, int>
+     */
+    public function seqMaxPorOrigen(): array
+    {
+        return DB::table('eventos')
+            ->selectRaw('nodo_origen, MAX(seq) AS seq_max')
+            ->groupBy('nodo_origen')
+            ->pluck('seq_max', 'nodo_origen')
+            ->map(fn ($seq): int => (int) $seq)
+            ->all();
     }
 
     /**
@@ -149,26 +189,30 @@ final class EventLog
      */
     public function desde(array $seqPorOrigen, int $limite = 500): array
     {
-        $consulta = DB::table('eventos');
+        $consulta = DB::table('eventos')->where(function ($filtro) use ($seqPorOrigen) {
+            // Orígenes que el solicitante aún no conoce: se envían completos.
+            $filtro->whereNotIn('nodo_origen', array_keys($seqPorOrigen));
 
-        foreach ($seqPorOrigen as $nodo => $seq) {
-            $consulta->orWhere(function ($q) use ($nodo, $seq) {
-                $q->where('nodo_origen', $nodo)
-                    ->where('seq', '>', (int) $seq);
-            });
-        }
+            foreach ($seqPorOrigen as $nodo => $seq) {
+                $filtro->orWhere(function ($q) use ($nodo, $seq) {
+                    $q->where('nodo_origen', $nodo)->where('seq', '>', (int) $seq);
+                });
+            }
+        });
 
-        if ($seqPorOrigen === []) {
-            // Sin punto de sincronía: devolver todo.
-        }
-
+        // Contrato api.md: orden (nodo_origen, seq), así cada cadena llega completa y en orden.
         $filas = $consulta
-            ->orderBy('creado_en')
+            ->orderBy('nodo_origen')
             ->orderBy('seq')
             ->limit($limite)
             ->get();
 
-        return $filas->map(fn ($fila) => $this->eventoArray((array) $fila))->all();
+        return $filas->map(function ($fila): array {
+            $evento = $this->eventoArray((array) $fila);
+            $evento['payload'] = json_decode($evento['payload'], true);
+
+            return $evento;
+        })->all();
     }
 
     /**
@@ -271,10 +315,7 @@ final class EventLog
 
     private function fechaUtcAhora(): string
     {
-        $ahora = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-        $milis = str_pad((string) ((int) ($ahora->format('u') / 1000)), 3, '0', STR_PAD_LEFT);
-
-        return $ahora->format('Y-m-d\TH:i:s.').$milis.'Z';
+        return Tiempo::iso();
     }
 
     /** @param  array<string, mixed>  $fila */

@@ -39,8 +39,13 @@ return [
         'saltos' => env('CANAL_SALTOS', 1),
     ],
 
-    'backoff_serie' => [1, 2, 4, 8, 16, 30],
+    'backoff_serie' => array_map('intval', explode(',', (string) env('BACKOFF_SERIE', '1,2,4,8,16,30'))),
     'backoff_jitter' => env('BACKOFF_JITTER', 0.2),
+
+    'a4_envej_min' => env('A4_ENVEJ_MIN', 5),
+    'a4_envej_tope' => env('A4_ENVEJ_TOPE', 5),
+    'b_envej_min' => env('B_ENVEJ_MIN', 10),
+    'b_envej_tope' => env('B_ENVEJ_TOPE', 'P2'),
 
     'pwa_ventana_repetido_min' => env('PWA_VENTANA_REPETIDO_MIN', 10),
 
@@ -53,5 +58,7 @@ return [
     'latidos_perdidos' => env('LATIDOS_PERDIDOS', 10),
     'replica_s' => env('REPLICA_S', 1),
     'polling_tablero_s' => env('POLLING_TABLERO_S', 2),
+
+    'llm_habilitado' => env('LLM_HABILITADO', false),
 
 ];

@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\FencingMiddleware;
 use App\Http\Middleware\SoloNodoA;
+use App\Http\Middleware\SoloRol;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'fencing' => FencingMiddleware::class,
             'solo_nodo_a' => SoloNodoA::class,
+            'rol' => SoloRol::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

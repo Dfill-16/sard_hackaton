@@ -33,3 +33,6 @@ Thumbs.db
 
 .zcode
 
+
+# PID de los procesos de scripts/start.ps1
+storage/framework/sard-pids*.txt

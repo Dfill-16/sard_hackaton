@@ -36,7 +36,7 @@ final class MetricasController
             'reportes' => $reportes->count(),
             'bytes_binario' => $bytesBinario,
             'bytes_json_equivalente' => $bytesJsonEquivalente,
-            'confirmados_por_lider' => 0,
+            'confirmados_por_lider' => $reportes->whereNotNull('confirmado_en')->count(),
         ];
     }
 }

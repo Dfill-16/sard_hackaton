@@ -5,6 +5,7 @@ namespace App\Node\A;
 use App\Protocol\PayloadInvalidoException;
 use App\Protocol\PayloadReporte;
 use App\Sard\Log\EventLog;
+use App\Sard\Support\Tiempo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -115,9 +116,6 @@ final class ReportesController
 
     private function fechaUtcAhora(): string
     {
-        $ahora = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
-        $milis = str_pad((string) ((int) ($ahora->format('u') / 1000)), 3, '0', STR_PAD_LEFT);
-
-        return $ahora->format('Y-m-d\TH:i:s.').$milis.'Z';
+        return Tiempo::iso();
     }
 }
