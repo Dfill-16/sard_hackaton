@@ -1,0 +1,15 @@
+{
+    "name": "SARD · Reportar emergencia",
+    "short_name": "SARD",
+    "description": "Reporta una emergencia aunque no haya señal. Anónimo.",
+    "lang": "es",
+    "start_url": "/pwa",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#0a0a0a",
+    "theme_color": "#0a0a0a",
+    "icons": [
+        { "src": "/icons/sard.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    ]
+}

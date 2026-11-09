@@ -1,0 +1,23 @@
+@import 'tailwindcss';
+@import './sard-tokens.css';
+
+@source '../views/pwa/**/*.blade.php';
+@source '../js/pwa/**/*.js';
+
+/*
+ * PWA ciudadana: siempre oscura (batería baja, uso de noche) y sin animaciones (T-005, paso 6).
+ */
+*,
+::before,
+::after {
+    transition: none !important;
+    animation: none !important;
+}
+
+html {
+    background: var(--sard-background);
+}
+
+body {
+    padding-bottom: env(safe-area-inset-bottom);
+}
