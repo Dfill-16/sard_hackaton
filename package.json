@@ -17,6 +17,9 @@
         "@laravel/multiplex": "^0.4.1"
     },
     "dependencies": {
-        "alpinejs": "^3.17.5"
+        "alpinejs": "^3.17.5",
+        "leaflet": "^1.9.4",
+        "pmtiles": "^3.2.1",
+        "protomaps-leaflet": "^5.1.0"
     }
 }

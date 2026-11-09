@@ -1,0 +1,128 @@
+/*
+ * Tokens compartidos de SARD (DESIGN.md §2) para el tablero y la PWA.
+ * Las vistas usan los nombres semánticos (bg-surface, text-muted, bg-p1…), nunca hex.
+ * Tema oscuro: clase .dark en <html> (DESIGN.md §5).
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+    --sard-background: #fdfdfc;
+    --sard-foreground: #1b1b18;
+    --sard-muted: #6b6a66;
+    --sard-surface: #ffffff;
+    --sard-surface-2: #f6f5f2;
+    --sard-border: #19140029;
+    --sard-border-hover: #1915014a;
+    --sard-accent: #f53003;
+    --sard-accent-hover: #c42300;
+    --sard-healthy: #15803d;
+    --sard-degraded: #b45309;
+    --sard-down: #dc2626;
+    --sard-focus: #f53003;
+
+    /* Semáforo de prioridad: relleno sólido + texto con contraste ≥ 4.5:1 sobre ese relleno. */
+    --sard-p1: #dc2626;
+    --sard-p1-ink: #ffffff;
+    --sard-p2: #c2410c;
+    --sard-p2-ink: #ffffff;
+    --sard-p3: #facc15;
+    --sard-p3-ink: #1b1b18;
+    --sard-p4: #d6d3cd;
+    --sard-p4-ink: #1b1b18;
+
+    --sard-map-grid: #1914000d;
+    --sard-selection: #f5300326;
+}
+
+.dark {
+    --sard-background: #0a0a0a;
+    --sard-foreground: #ededec;
+    --sard-muted: #a1a09a;
+    --sard-surface: #161615;
+    --sard-surface-2: #1d1d1b;
+    --sard-border: #3e3e3a;
+    --sard-border-hover: #62605b;
+    --sard-accent: #ff4433;
+    --sard-accent-hover: #f61500;
+    --sard-healthy: #4ade80;
+    --sard-degraded: #fbbf24;
+    --sard-down: #ef4444;
+    --sard-focus: #ff750f;
+
+    --sard-p1: #ef4444;
+    --sard-p1-ink: #0a0a0a;
+    --sard-p2: #fb923c;
+    --sard-p2-ink: #0a0a0a;
+    --sard-p3: #facc15;
+    --sard-p3-ink: #0a0a0a;
+    --sard-p4: #57534e;
+    --sard-p4-ink: #ededec;
+
+    --sard-map-grid: #fffaed0f;
+    --sard-selection: #ff443340;
+}
+
+@theme inline {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    --color-background: var(--sard-background);
+    --color-foreground: var(--sard-foreground);
+    --color-muted: var(--sard-muted);
+    --color-surface: var(--sard-surface);
+    --color-surface-2: var(--sard-surface-2);
+    --color-border: var(--sard-border);
+    --color-border-hover: var(--sard-border-hover);
+    --color-accent: var(--sard-accent);
+    --color-accent-hover: var(--sard-accent-hover);
+    --color-healthy: var(--sard-healthy);
+    --color-degraded: var(--sard-degraded);
+    --color-down: var(--sard-down);
+    --color-focus: var(--sard-focus);
+    --color-p1: var(--sard-p1);
+    --color-p1-ink: var(--sard-p1-ink);
+    --color-p2: var(--sard-p2);
+    --color-p2-ink: var(--sard-p2-ink);
+    --color-p3: var(--sard-p3);
+    --color-p3-ink: var(--sard-p3-ink);
+    --color-p4: var(--sard-p4);
+    --color-p4-ink: var(--sard-p4-ink);
+}
+
+@layer base {
+    html {
+        color-scheme: light;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    html.dark {
+        color-scheme: dark;
+    }
+
+    body {
+        font-variant-numeric: tabular-nums;
+    }
+
+    ::selection {
+        background: var(--sard-selection);
+        color: inherit;
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--sard-focus);
+        outline-offset: 2px;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        ::before,
+        ::after {
+            transition-duration: 0ms !important;
+            animation-duration: 0ms !important;
+        }
+    }
+}

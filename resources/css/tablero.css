@@ -1,0 +1,67 @@
+@import 'tailwindcss';
+@import './sard-tokens.css';
+
+@source '../views/tablero/**/*.blade.php';
+@source '../js/tablero/**/*.js';
+
+/* Paneles con desplazamiento propio: barras finas con el color del borde. */
+.panel-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--sard-border) transparent;
+}
+
+/* Mapa sin teselas: lienzo neutro con cuadrícula (funciona sin internet). */
+.mapa-neutro,
+.mapa-neutro.leaflet-container {
+    background-color: var(--sard-surface-2);
+    background-image:
+        linear-gradient(var(--sard-map-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--sard-map-grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+    font-family: inherit;
+}
+
+.mapa-neutro.con-teselas {
+    background-image: none;
+}
+
+.mapa-neutro .leaflet-control-attribution {
+    background: color-mix(in srgb, var(--sard-surface) 88%, transparent);
+    color: var(--sard-muted);
+    font-size: 10px;
+    border-top-left-radius: 4px;
+}
+
+.mapa-neutro .leaflet-control-attribution a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.mapa-neutro .leaflet-control-zoom a {
+    background: var(--sard-surface);
+    color: var(--sard-foreground);
+    border-color: var(--sard-border);
+}
+
+.mapa-neutro .leaflet-tooltip {
+    background: var(--sard-surface);
+    color: var(--sard-foreground);
+    border: 1px solid var(--sard-border);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px #0000001f;
+    font-size: 12px;
+}
+
+/* Esqueleto de carga: pulso suave, sin spinners. */
+.esqueleto {
+    background: var(--sard-surface-2);
+    border-radius: 6px;
+    animation: esqueleto 1.4s ease-in-out infinite;
+}
+
+@keyframes esqueleto {
+    50% {
+        opacity: 0.55;
+    }
+}
