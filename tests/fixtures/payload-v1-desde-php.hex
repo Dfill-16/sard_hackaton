@@ -1,0 +1,7 @@
+# payload-v1-desde-php.hex · FIXTURE CONGELADO (prueba cruzada) · T-002
+# Generado UNA VEZ con el codec PHP (App\Protocol\PayloadReporte::encode) el 2026-11-08.
+# El test JS lo decodifica: demuestra que JS decodifica lo que codifica PHP.
+# Entrada: uuid 0194e8e1-9b4c-7d2f-b3e5-6a8d1c4f7e9b, device_id 0x5a4c3b2d (1515000365),
+# lat 6.2442, lon -75.5812, tipo 2 (incendio/explosión), banderas 0x0008 (bit 3 incendio),
+# personas 0 (desconocido), texto "fuego en bodega" (14 B) → 51 B
+010194e8e19b4c7d2fb3e56a8d1c4f7e9b5a4c3b2d03b8ca10d2f33960020008000f667565676f20656e20626f646567619f91

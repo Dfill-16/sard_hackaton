@@ -1,0 +1,7 @@
+# payload-v1-desde-js.hex · FIXTURE CONGELADO (prueba cruzada) · T-002
+# Generado UNA VEZ con el codec JS (resources/js/protocol/payload.js encode) el 2026-11-08.
+# El test PHP lo decodifica: demuestra que PHP decodifica lo que codifica JS.
+# Entrada: uuid 0194e8d5-2c7a-7f3e-8a1d-4b6c9e0f2a3b, device_id 0x7f3e2d1c (2134781212),
+# lat 4.65, lon -74.1, tipo 6 (vía bloqueada), banderas 0x0400 (bit 10), personas 3,
+# texto "vía bloqueada por derrumbe" (25 B, ejercita multibyte UTF-8) → 63 B
+010194e8d52c7a7f3e8a1d4b6c9e0f2a3b7f3e2d1c02c588a0d3d53cc0060400031b76c3ad6120626c6f71756561646120706f722064657272756d6265e44c

@@ -1,0 +1,14 @@
+# payload-v1.hex · FIXTURE CONGELADO (oráculo) · T-002
+# Generado UNA VEZ con el codec PHP (App\Protocol\PayloadReporte::encode) el 2026-11-08.
+# NO recalcular ni regenerar: los tests PHP y JS lo leen como fuente de verdad.
+# Formato: un payload en hex por línea; los casos van en orden (A, B).
+#
+# caso A · con ubicación: uuid 0194e8c2-5a3e-7d4f-9b2c-1e5f6a7b8c9d,
+#          device_id 305419896 (0x12345678), lat 4.7110, lon -74.0721,
+#          tipo 3 (médico), banderas 0x0000, personas 2,
+#          texto "heridos en el piso 2" (20 B) → 56 B
+010194e8c25a3e7d4f9b2c1e5f6a7b8c9d1234567802ced770d3d97e98030000021468657269646f7320656e20656c207069736f20322d97
+# caso B · sin ubicación (centinela 0x7FFFFFFF en lat y lon): uuid 0194e8c2-5a3e-7d4f-9b2c-1e5f6a7b8c9e,
+#          device_id 305419897 (0x12345679), tipo 0 (otro), banderas 0x0000,
+#          personas 0 (desconocido), texto vacío → 36 B exactos (AC-004a)
+010194e8c25a3e7d4f9b2c1e5f6a7b8c9e123456797fffffff7fffffff00000000003a21
