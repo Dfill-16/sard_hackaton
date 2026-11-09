@@ -9,4 +9,7 @@ Route::middleware(['solo_nodo_a', 'fencing'])->group(function () {
     Route::post('/reportes', [ReportesController::class, 'almacenar']);
     Route::get('/salud', SaludController::class);
     Route::get('/metricas', MetricasController::class);
+    Route::get('/pwa', function () {
+        return view('pwa');
+    });
 });
