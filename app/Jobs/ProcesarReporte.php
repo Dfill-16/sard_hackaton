@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Agents\A2\ElevacionLlm;
 use App\Agents\A2\Triaje;
 use App\Agents\A3\Correlacion;
 use App\Agents\A6\Coordinacion;
@@ -23,7 +24,7 @@ class ProcesarReporte implements ShouldQueue
 
     public function __construct(public string $reporteUuid) {}
 
-    public function handle(EstadoNodo $estado, EventLog $log, Triaje $triaje, Correlacion $correlacion, Coordinacion $coordinacion): void
+    public function handle(EstadoNodo $estado, EventLog $log, Triaje $triaje, ElevacionLlm $elevacion, Correlacion $correlacion, Coordinacion $coordinacion): void
     {
         if (! $estado->esLider()) {
             return;
@@ -34,12 +35,21 @@ class ProcesarReporte implements ShouldQueue
             return;
         }
 
-        if (! DB::table('triajes')->where('reporte_uuid', $this->reporteUuid)->exists()) {
-            $normalizado = (array) $reporte;
-            $normalizado['sin_ubicacion'] = (bool) $reporte->sin_ubicacion;
-            $normalizado['truncado'] = (bool) $reporte->truncado;
+        $normalizado = (array) $reporte;
+        $normalizado['sin_ubicacion'] = (bool) $reporte->sin_ubicacion;
+        $normalizado['truncado'] = (bool) $reporte->truncado;
 
+        if (! DB::table('triajes')->where('reporte_uuid', $this->reporteUuid)->exists()) {
             $log->append('TriajeAsignado', $triaje->evaluar($normalizado), $this->reporteUuid);
+        }
+
+        // T-016: el LLM (si está habilitado) solo puede sugerir subir la prioridad de reglas.
+        $yaElevado = DB::table('eventos')->where('tipo', 'PrioridadElevadaLLM')->where('ref_uuid', $this->reporteUuid)->exists();
+        if (! $yaElevado) {
+            $sugerencia = $elevacion->evaluar($normalizado, $triaje->evaluar($normalizado));
+            if ($sugerencia !== null) {
+                $log->append('PrioridadElevadaLLM', $sugerencia, $this->reporteUuid);
+            }
         }
 
         $incidenteUuid = $correlacion->asignar($this->reporteUuid);

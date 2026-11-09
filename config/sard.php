@@ -61,4 +61,21 @@ return [
 
     'llm_habilitado' => env('LLM_HABILITADO', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | LLM opcional (capa 7, T-016 · contratos/config.md · ADR-001)
+    |--------------------------------------------------------------------------
+    | Cadena 1 → 2 → 3 → reglas. Las claves viven solo en .env: nunca en el
+    | repositorio ni en los logs. Solo se envían datos sintéticos.
+    */
+
+    'llm' => [
+        'timeout_s' => env('LLM_TIMEOUT_S', 5),
+        'proveedores' => [
+            ['url' => env('LLM_1_URL', 'https://generativelanguage.googleapis.com/v1beta/openai'), 'key' => env('LLM_1_KEY'), 'modelo' => env('LLM_1_MODELO')],
+            ['url' => env('LLM_2_URL', 'https://openrouter.ai/api/v1'), 'key' => env('LLM_2_KEY'), 'modelo' => env('LLM_2_MODELO')],
+            ['url' => env('LLM_3_URL', 'https://integrate.api.nvidia.com/v1'), 'key' => env('LLM_3_KEY'), 'modelo' => env('LLM_3_MODELO')],
+        ],
+    ],
+
 ];

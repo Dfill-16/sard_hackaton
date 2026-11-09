@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Sard\Proyeccion\Manejadores\AckCampoManejador;
 use App\Sard\Proyeccion\Manejadores\AlertaCampoEnviadaManejador;
 use App\Sard\Proyeccion\Manejadores\DecisionHumanaManejador;
 use App\Sard\Proyeccion\Manejadores\IncidenteAgrupadoManejador;
 use App\Sard\Proyeccion\Manejadores\IncidenteMasivoDeclaradoManejador;
+use App\Sard\Proyeccion\Manejadores\PrioridadElevadaLLMManejador;
 use App\Sard\Proyeccion\Manejadores\RecomendacionPropuestaManejador;
 use App\Sard\Proyeccion\Manejadores\ReporteNormalizadoManejador;
 use App\Sard\Proyeccion\Manejadores\TriajeAsignadoManejador;
@@ -23,11 +25,13 @@ class AppServiceProvider extends ServiceProvider
     public const MANEJADORES = [
         'ReporteNormalizado' => ReporteNormalizadoManejador::class,
         'TriajeAsignado' => TriajeAsignadoManejador::class,
+        'PrioridadElevadaLLM' => PrioridadElevadaLLMManejador::class,
         'IncidenteAgrupado' => IncidenteAgrupadoManejador::class,
         'IncidenteMasivoDeclarado' => IncidenteMasivoDeclaradoManejador::class,
         'RecomendacionPropuesta' => RecomendacionPropuestaManejador::class,
         'DecisionHumana' => DecisionHumanaManejador::class,
         'AlertaCampoEnviada' => AlertaCampoEnviadaManejador::class,
+        'AckCampo' => AckCampoManejador::class,
     ];
 
     /**
