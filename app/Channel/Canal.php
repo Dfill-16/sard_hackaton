@@ -28,6 +28,9 @@ final class Canal
 
     public const TIMEOUT_ENTREGA_S = 2;
 
+    /** Canal multisalto (T-018): de 1 a 3 saltos, por CANAL_SALTOS o POST /api/canal/config. */
+    public const SALTOS_MAXIMOS = 3;
+
     /** Parámetros que se pueden cambiar en vivo con POST /api/canal/config. */
     public const PARAMETROS_EN_VIVO = ['perdida', 'ventana_abierta_s', 'ventana_cerrada_s', 'saltos'];
 
@@ -45,20 +48,10 @@ final class Canal
 
         $estado = DB::transaction(function () use ($datos, $cuerpo, $parametros, $ahora, $id): string {
             $seq = (int) DB::table('mensajes')->max('seq') + 1;
-            $semilla = (int) $parametros['semilla'];
+            $saltos = max(1, min(self::SALTOS_MAXIMOS, (int) $parametros['saltos']));
+            $tramo = $this->tramo($parametros, $seq, 1);
 
-            $perdido = Aleatorio::u($semilla, $seq, Aleatorio::PERDIDA) < (float) $parametros['perdida'];
-
-            $latMin = (int) $parametros['lat_min_ms'];
-            $latMax = (int) $parametros['lat_max_ms'];
-            $retrasoMs = $latMin + Aleatorio::u($semilla, $seq, Aleatorio::LATENCIA) * ($latMax - $latMin);
-
-            $reordenado = Aleatorio::u($semilla, $seq, Aleatorio::DESORDEN) < (float) $parametros['desorden'];
-            if ($reordenado) {
-                $retrasoMs += $latMax + Aleatorio::u($semilla, $seq, Aleatorio::RETRASO_DESORDEN) * $latMax;
-            }
-
-            $estado = $perdido ? self::ESTADO_PERDIDO : self::ESTADO_EN_COLA;
+            $estado = $tramo['perdido'] ? self::ESTADO_PERDIDO : self::ESTADO_EN_COLA;
 
             DB::table('mensajes')->insert([
                 'id' => $id,
@@ -70,15 +63,48 @@ final class Canal
                 'cuerpo' => $cuerpo,
                 'bytes' => strlen($cuerpo),
                 'estado' => $estado,
-                'deliver_at' => Tiempo::iso($ahora->addMilliseconds((int) round($retrasoMs))),
-                'reordenado' => $reordenado,
+                'deliver_at' => Tiempo::iso($ahora->addMilliseconds($tramo['retraso_ms'])),
+                'reordenado' => $tramo['reordenado'],
                 'creado_en' => Tiempo::iso($ahora),
+                'saltos' => $saltos,
+                'salto_actual' => 1,
+                'perdido_en_salto' => $tramo['perdido'] ? 1 : null,
             ]);
 
             return $estado;
         });
 
         return ['mensaje_id' => $id, 'estado' => $estado];
+    }
+
+    /**
+     * Sorteo reproducible de un tramo (salto) del canal: pérdida, latencia y desorden.
+     *
+     * El salto s usa u(k + 4·(s − 1)); así un canal de 1 salto es idéntico al de T-006.
+     *
+     * @param  array<string, mixed>  $parametros
+     * @return array{perdido: bool, retraso_ms: int, reordenado: bool}
+     */
+    public function tramo(array $parametros, int $seq, int $salto): array
+    {
+        $semilla = (int) $parametros['semilla'];
+        $desplazamiento = 4 * ($salto - 1);
+        $u = fn (int $k): float => Aleatorio::u($semilla, $seq, $k + $desplazamiento);
+
+        $latMin = (int) $parametros['lat_min_ms'];
+        $latMax = (int) $parametros['lat_max_ms'];
+        $retrasoMs = $latMin + $u(Aleatorio::LATENCIA) * ($latMax - $latMin);
+
+        $reordenado = $u(Aleatorio::DESORDEN) < (float) $parametros['desorden'];
+        if ($reordenado) {
+            $retrasoMs += $latMax + $u(Aleatorio::RETRASO_DESORDEN) * $latMax;
+        }
+
+        return [
+            'perdido' => $u(Aleatorio::PERDIDA) < (float) $parametros['perdida'],
+            'retraso_ms' => (int) round($retrasoMs),
+            'reordenado' => $reordenado,
+        ];
     }
 
     /**
@@ -111,12 +137,41 @@ final class Canal
             return 0;
         }
 
+        $entregados = 0;
         foreach ($vencidos as $mensaje) {
+            // Multisalto (T-018): solo se entrega al destino tras el último salto.
+            if ((int) $mensaje->salto_actual < (int) $mensaje->saltos) {
+                $this->avanzarSalto($mensaje, $parametros, $ahora);
+
+                continue;
+            }
+
             $estado = $this->entregar($mensaje) ? self::ESTADO_ENTREGADO : self::ESTADO_FALLIDO;
             DB::table('mensajes')->where('id', $mensaje->id)->update(['estado' => $estado]);
+            $entregados++;
         }
 
-        return $vencidos->count();
+        return $entregados;
+    }
+
+    /**
+     * El mensaje llegó al repetidor intermedio: sortea el siguiente tramo y lo reprograma
+     * (o lo marca perdido en ese salto).
+     *
+     * @param  array<string, mixed>  $parametros
+     */
+    private function avanzarSalto(object $mensaje, array $parametros, CarbonImmutable $ahora): void
+    {
+        $salto = (int) $mensaje->salto_actual + 1;
+        $tramo = $this->tramo($parametros, (int) $mensaje->seq, $salto);
+
+        DB::table('mensajes')->where('id', $mensaje->id)->update([
+            'salto_actual' => $salto,
+            'estado' => $tramo['perdido'] ? self::ESTADO_PERDIDO : self::ESTADO_EN_COLA,
+            'perdido_en_salto' => $tramo['perdido'] ? $salto : null,
+            'deliver_at' => Tiempo::iso($ahora->addMilliseconds($tramo['retraso_ms'])),
+            'reordenado' => (bool) $mensaje->reordenado || $tramo['reordenado'],
+        ]);
     }
 
     /**
@@ -147,7 +202,7 @@ final class Canal
     }
 
     /**
-     * @return array{recibidos: int, perdidos: int, entregados: int, reordenados: int, fallidos: int, bytes: int, en_cola: int}
+     * @return array{recibidos: int, perdidos: int, entregados: int, reordenados: int, fallidos: int, bytes: int, en_cola: int, saltos: int, perdidos_por_salto: array<int, int>}
      */
     public function estadisticas(): array
     {
@@ -162,6 +217,17 @@ final class Canal
             [self::ESTADO_PERDIDO, self::ESTADO_ENTREGADO, self::ESTADO_FALLIDO, self::ESTADO_EN_COLA]
         )->first();
 
+        $porSalto = DB::table('mensajes')
+            ->whereNotNull('perdido_en_salto')
+            ->groupBy('perdido_en_salto')
+            ->pluck(DB::raw('COUNT(*)'), 'perdido_en_salto');
+
+        $saltosVistos = max(1, (int) DB::table('mensajes')->max('saltos'), (int) $this->parametros()['saltos']);
+        $perdidosPorSalto = [];
+        for ($salto = 1; $salto <= min(self::SALTOS_MAXIMOS, $saltosVistos); $salto++) {
+            $perdidosPorSalto[] = (int) ($porSalto[$salto] ?? 0);
+        }
+
         return [
             'recibidos' => (int) $fila->recibidos,
             'perdidos' => (int) $fila->perdidos,
@@ -170,6 +236,8 @@ final class Canal
             'fallidos' => (int) $fila->fallidos,
             'bytes' => (int) $fila->bytes,
             'en_cola' => (int) $fila->en_cola,
+            'saltos' => (int) $this->parametros()['saltos'],
+            'perdidos_por_salto' => $perdidosPorSalto,
         ];
     }
 

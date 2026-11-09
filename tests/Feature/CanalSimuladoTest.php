@@ -178,7 +178,7 @@ final class CanalSimuladoTest extends TestCase
         $this->assertGreaterThan(0, $estadisticas['perdidos']);
         $this->assertGreaterThan(0, $estadisticas['reordenados']);
         $this->assertSame(DB::table('mensajes')->sum('bytes'), $estadisticas['bytes']);
-        $this->assertSame(['recibidos', 'perdidos', 'entregados', 'reordenados', 'fallidos', 'bytes', 'en_cola'], array_keys($estadisticas));
+        $this->assertSame(['recibidos', 'perdidos', 'entregados', 'reordenados', 'fallidos', 'bytes', 'en_cola', 'saltos', 'perdidos_por_salto'], array_keys($estadisticas));
     }
 
     public function test_config_en_vivo_cambia_la_perdida_solo_con_demo(): void
