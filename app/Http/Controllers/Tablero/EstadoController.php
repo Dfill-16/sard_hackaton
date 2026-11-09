@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Tablero;
 
+use App\Sard\Llm\Cadena;
 use App\Sard\Nodo\EstadoNodo;
+use App\Sard\Reglas\Brechas;
 use App\Sard\Support\Tiempo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +22,7 @@ final class EstadoController
     public function __construct(
         private EstadoNodo $estado,
         private Presentador $presentador,
+        private Brechas $brechas,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
@@ -41,7 +44,9 @@ final class EstadoController
             'lider' => $this->estado->lider(),
             'epoca' => $this->estado->epoca(),
             'rol' => $this->estado->rol(),
-            'modo' => config('sard.llm_habilitado') ? 'llm' : 'reglas',
+            // T-016: «modo LLM» solo si está habilitado y la última llamada no cayó a reglas.
+            'modo' => Cadena::habilitado() && $this->estado->valor('llm_estado') !== 'fallo' ? 'llm' : 'reglas',
+            'llm_proveedor' => Cadena::habilitado() ? $this->estado->valor('llm_proveedor') : null,
             'ultimo_latido_hace_s' => $this->estado->ultimoLatidoHaceS(),
             'aislado' => $this->estado->aislado(),
             'generado_en' => Tiempo::iso($ahora),
@@ -54,6 +59,10 @@ final class EstadoController
             'cola' => $todos ? $urgentes : $urgentes->take(self::TOPE_COLA)->values(),
             'baja_prioridad' => $conUbicacion->whereIn('prioridad', ['P3', 'P4'])->values(),
             'sin_ubicacion' => $incidentes->where('sin_ubicacion', true)->values(),
+            // T-017: capas de demostración y brechas de cobertura.
+            'recursos' => $this->brechas->recursos(),
+            'unidades' => $this->brechas->unidades(),
+            'brechas' => $this->brechas->calcular($urgentes),
         ]);
     }
 }

@@ -134,6 +134,34 @@ final class CoordinacionA6Test extends TestCase
         $this->assertNotSame($recomendacion->unidad_id, $this->recomendacionDe($siguiente)->unidad_id, 'una unidad asignada no se vuelve a recomendar');
     }
 
+    public function test_aprobar_una_recomendacion_cuya_unidad_ya_se_asigno_no_la_despacha_dos_veces(): void
+    {
+        // Dos incendios cerca de Milán: A6 propone Bomberos Estación 2 (U-06) para ambos.
+        $primero = $this->payload(banderas: ['incendio'], tipo: 2, lat: 5.0485, lon: -75.4835, deviceId: 1);
+        $segundo = $this->payload(banderas: ['incendio'], tipo: 2, lat: 5.0300, lon: -75.4835, deviceId: 2);
+        $this->entregar($primero)->assertOk();
+        $this->entregar($segundo)->assertOk();
+        $viejaDelSegundo = $this->recomendacionDe($segundo);
+        $this->assertSame('U-06', $this->recomendacionDe($primero)->unidad_id);
+        $this->assertSame('U-06', $viejaDelSegundo->unidad_id);
+
+        $this->decidir(['recomendacion_uuid' => $this->recomendacionDe($primero)->uuid, 'accion' => 'aprobar'])->assertCreated();
+
+        // Al aprobar, A6 ya repropuso para el segundo incidente: la nueva versión no usa U-06.
+        $this->assertNotSame('U-06', $this->recomendacionDe($segundo)->unidad_id);
+
+        // Si alguien aprueba la versión vieja (pantalla sin refrescar), no se despacha dos veces.
+        $this->decidir(['recomendacion_uuid' => $viejaDelSegundo->uuid, 'accion' => 'aprobar'])
+            ->assertStatus(409)
+            ->assertJsonPath('error', 'unidad_no_disponible');
+
+        $nueva = $this->recomendacionDe($segundo);
+        $this->assertSame((int) $viejaDelSegundo->version + 1, (int) $nueva->version);
+        $this->assertNotSame('U-06', $nueva->unidad_id);
+        $this->assertSame(1, DB::table('eventos')->where('tipo', 'AlertaCampoEnviada')->count());
+        $this->assertSame(0, DB::table('decisiones')->where('recomendacion_uuid', $viejaDelSegundo->uuid)->count());
+    }
+
     public function test_descartar_sin_motivo_responde_422_y_no_deja_decision(): void
     {
         $payload = $this->payload(banderas: ['incendio'], tipo: 2);

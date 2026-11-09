@@ -13,6 +13,8 @@ export default defineConfig({
                 'resources/js/tablero/app.js',
                 'resources/css/pwa.css',
                 'resources/js/pwa/app.js',
+                'resources/css/campo.css',
+                'resources/js/campo/app.js',
             ],
             refresh: true,
             fonts: [

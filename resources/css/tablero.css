@@ -53,6 +53,38 @@
     font-size: 12px;
 }
 
+/* T-017: íconos de recursos y unidades (datos de demostración). Estado escrito en el tooltip. */
+.icono-capa {
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    background: var(--sard-surface);
+    border: 1px solid var(--sard-border-hover);
+    box-shadow: 0 1px 4px #00000029;
+    color: var(--sard-foreground);
+}
+
+.icono-capa svg {
+    width: 16px;
+    height: 16px;
+}
+
+.icono-capa.unidad-disponible {
+    color: var(--sard-healthy);
+    border-color: var(--sard-healthy);
+}
+
+.icono-capa.unidad-asignada {
+    color: var(--sard-accent);
+    border-color: var(--sard-accent);
+}
+
+.icono-capa.unidad-ocupada {
+    color: var(--sard-muted);
+    border-style: dashed;
+    opacity: 0.75;
+}
+
 /* Esqueleto de carga: pulso suave, sin spinners. */
 .esqueleto {
     background: var(--sard-surface-2);

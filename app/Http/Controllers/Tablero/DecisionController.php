@@ -44,6 +44,20 @@ final class DecisionController
             return response()->json(['error' => 'no_encontrada', 'detalle' => 'La recomendación no existe en este nodo.'], 404);
         }
 
+        // La recomendación se propuso antes de que otra aprobación asignara su unidad: no se despacha
+        // dos veces la misma unidad. A6 propone una versión nueva con una unidad libre.
+        $yaAprobada = DB::table('decisiones')->where('recomendacion_uuid', $recomendacion->uuid)->where('accion', 'aprobar')->exists();
+        if ($datos['accion'] === 'aprobar' && $recomendacion->unidad_id !== null && ! $yaAprobada
+            && ! $this->coordinacion->unidadDisponible($recomendacion->unidad_id)) {
+            $nueva = $this->coordinacion->evaluar($recomendacion->incidente_uuid, redactarConLlm: false);
+
+            return response()->json([
+                'error' => 'unidad_no_disponible',
+                'detalle' => 'Esa unidad ya fue asignada a otro incidente. A6 propuso una nueva recomendación: revísala antes de aprobar.',
+                'nueva_recomendacion_uuid' => $nueva,
+            ], 409);
+        }
+
         $resultado = $this->coordinacion->decidir(
             $recomendacion,
             $datos['accion'],

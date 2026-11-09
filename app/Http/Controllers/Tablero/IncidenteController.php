@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Tablero;
 
 use App\Sard\Reglas\Banderas;
+use App\Sard\Reglas\Brechas;
 use App\Sard\Support\Tiempo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +16,10 @@ final class IncidenteController
 {
     public const LARGO_HASH_CORTO = 12;
 
-    public function __construct(private Presentador $presentador) {}
+    public function __construct(
+        private Presentador $presentador,
+        private Brechas $brechas,
+    ) {}
 
     public function __invoke(string $uuid): JsonResponse
     {
@@ -31,7 +35,8 @@ final class IncidenteController
             ->orderBy('reportes.creado_en')
             ->get([
                 'reportes.*', 'triajes.prioridad', 'triajes.puntaje', 'triajes.senales',
-                'triajes.incertidumbre', 'triajes.motivos', 'triajes.modo',
+                'triajes.incertidumbre', 'triajes.motivos', 'triajes.modo', 'triajes.origen', 'triajes.prioridad_reglas',
+                'triajes.elevacion_a', 'triajes.elevacion_explicacion', 'triajes.elevacion_proveedor',
             ]);
 
         $resumen = $this->presentador->resumenes($uuid)[$uuid] ?? '';
@@ -76,8 +81,13 @@ final class IncidenteController
             ->get(['alertas.uuid', 'alertas.unidad_id', 'unidades.nombre as unidad_nombre', 'alertas.texto', 'alertas.enviada_en', 'alertas.ack_en']);
 
         return response()->json([
-            ...$this->presentador->tarjeta($incidente, Tiempo::ahora(), $resumen, $decisiones->isNotEmpty()),
+            ...$this->presentador->tarjeta($incidente, Tiempo::ahora(), $resumen, $decisiones->isNotEmpty(), $this->presentador->radios($uuid)[$uuid] ?? null),
             'contradicciones' => json_decode($incidente->contradicciones, true) ?? [],
+            'fuentes' => $this->presentador->fuentes($uuid),
+            'albergue_cercano' => $this->brechas->albergueMasCercano(
+                $incidente->lat === null ? null : (float) $incidente->lat,
+                $incidente->lon === null ? null : (float) $incidente->lon,
+            ),
             'recomendacion' => $recomendacion === null ? null : [
                 'uuid' => $recomendacion->uuid,
                 'version' => (int) $recomendacion->version,
@@ -115,7 +125,14 @@ final class IncidenteController
                 'senales' => json_decode($reporte->senales ?? '[]', true),
                 'incertidumbre' => $reporte->incertidumbre === null ? null : (float) $reporte->incertidumbre,
                 'motivos_incertidumbre' => json_decode($reporte->motivos ?? '[]', true),
-                'origen' => $reporte->modo === 'llm' ? 'IA' : 'reglas',
+                'origen' => $reporte->origen === 'IA' ? 'IA' : 'reglas',
+                'prioridad_reglas' => $reporte->prioridad_reglas ?? $reporte->prioridad,
+                'elevacion' => $reporte->elevacion_a === null ? null : [
+                    'a' => $reporte->elevacion_a,
+                    'explicacion' => $reporte->elevacion_explicacion,
+                    'proveedor' => $reporte->elevacion_proveedor,
+                    'etiqueta' => 'sugerencia',
+                ],
             ])->all(),
             'eventos' => $eventos->all(),
         ]);

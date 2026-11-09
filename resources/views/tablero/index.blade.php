@@ -63,6 +63,8 @@
                     <span class="rounded-sm border border-border px-2 py-1 font-mono" x-text="`época ${estado.epoca}`"></span>
                     <span class="rounded-sm bg-degraded/12 px-2 py-1 font-medium text-degraded" x-show="estado.modo === 'reglas'"
                         title="Sin LLM: triaje y correlación por reglas">modo reglas</span>
+                    <span class="rounded-sm border border-border px-2 py-1 font-medium" x-show="estado.modo === 'llm'"
+                        :title="estado.llm_proveedor ? `Último proveedor: ${estado.llm_proveedor}. El LLM solo eleva prioridades y redacta; nunca decide.` : 'El LLM solo eleva prioridades y redacta; nunca decide.'">modo LLM</span>
                     <span class="rounded-sm border border-border px-2 py-1 font-mono"
                         :class="estado.rol !== 'lider' && estado.ultimo_latido_hace_s >= 3 ? 'border-degraded text-degraded' : ''"
                         :title="estado.rol === 'lider' ? 'Último latido confirmado por el seguidor' : 'Último latido recibido del líder; a los 10 s este nodo asume'"
@@ -125,6 +127,32 @@
                 <p class="px-2.5 text-xs text-muted" x-show="estado && estado.sin_ubicacion.length === 0">Ningún reporte sin ubicación.</p>
             </section>
 
+            <section aria-labelledby="titulo-brechas">
+                <div class="px-2.5 pb-1.5">
+                    <h2 id="titulo-brechas" class="flex items-center gap-1.5 text-sm font-semibold">
+                        @include('tablero.partials.icono', ['nombre' => 'alerta'])
+                        Brechas <span class="font-mono font-normal text-muted" x-text="estado ? (estado.brechas ?? []).length : '–'"></span>
+                    </h2>
+                    <p class="mt-0.5 text-xs text-muted">P1–P2 sin unidad disponible del tipo necesario a ≤ 3 km. Solo informa; no cambia la recomendación.</p>
+                </div>
+                <ul class="flex flex-col gap-0.5">
+                    <template x-for="b in (estado ? estado.brechas ?? [] : [])" :key="b.incidente_uuid">
+                        <li>
+                            <button type="button" @click="abrir(b.incidente_uuid)"
+                                class="flex w-full items-start gap-3 rounded-md border border-dashed border-down/50 px-2.5 py-2 text-left hover:bg-surface-2">
+                                <span class="mt-px inline-flex h-6 min-w-9 shrink-0 items-center justify-center rounded-sm px-1.5 font-mono text-xs font-semibold"
+                                    :class="clasePrioridad(b.prioridad)" x-text="b.prioridad"></span>
+                                <span class="flex min-w-0 flex-col gap-0.5">
+                                    <span class="text-sm font-medium" x-text="b.tipo_nombre"></span>
+                                    <span class="text-xs text-muted" x-text="textoBrecha(b)"></span>
+                                </span>
+                            </button>
+                        </li>
+                    </template>
+                </ul>
+                <p class="px-2.5 text-xs text-muted" x-show="estado && (estado.brechas ?? []).length === 0">Sin brechas: todo P1–P2 tiene una unidad disponible cerca.</p>
+            </section>
+
             <section aria-labelledby="titulo-baja">
                 <div class="px-2.5 pb-1.5">
                     <h2 id="titulo-baja" class="text-sm font-semibold">Baja prioridad
@@ -143,11 +171,27 @@
         {{-- Columna 2: mapa --}}
         <section class="relative min-h-[360px] border-border lg:min-h-0 xl:border-r" aria-label="Mapa de incidentes">
             <div x-ref="mapa" class="mapa-neutro absolute inset-0"></div>
+            <div class="absolute top-3 right-3 z-[500] flex flex-col items-end gap-1.5">
+                <div class="flex gap-1 rounded-md bg-surface/95 p-1 text-xs shadow-[0_2px_8px_#0000001f]" role="group" aria-label="Capas del mapa">
+                    <button type="button" @click="alternarCapa('recursos')" :aria-pressed="verRecursos"
+                        :class="verRecursos ? 'bg-foreground text-background' : 'text-muted hover:text-foreground'"
+                        class="min-h-8 rounded-sm px-2.5 font-medium">Recursos</button>
+                    <button type="button" @click="alternarCapa('unidades')" :aria-pressed="verUnidades"
+                        :class="verUnidades ? 'bg-foreground text-background' : 'text-muted hover:text-foreground'"
+                        class="min-h-8 rounded-sm px-2.5 font-medium">Unidades</button>
+                </div>
+                <span x-show="verRecursos || verUnidades" x-cloak
+                    class="rounded-sm bg-degraded/90 px-2 py-0.5 text-[11px] font-semibold text-black">Datos de demostración</span>
+                <span x-show="verUnidades" x-cloak class="rounded-sm bg-surface/95 px-2 py-1 text-[11px] text-muted shadow-[0_2px_8px_#0000001f]">
+                    Unidad: <b class="font-medium text-healthy">verde disponible</b> · <b class="font-medium text-accent">roja asignada</b> · punteada ocupada
+                </span>
+            </div>
             <div class="pointer-events-none absolute bottom-3 left-3 z-[500] flex flex-wrap items-center gap-3 rounded-md bg-surface/95 px-2.5 py-1.5 text-[11px] text-muted shadow-[0_2px_8px_#0000001f]">
                 @foreach (['P1', 'P2', 'P3', 'P4'] as $prioridad)
                     <span class="inline-flex items-center gap-1"><span class="size-2.5 rounded-full bg-{{ strtolower($prioridad) }}"></span>{{ $prioridad }}</span>
                 @endforeach
-                <span>· anillo grueso = masivo</span>
+                <span>· anillo grueso = masivo · anillo rojo punteado = brecha</span>
+                <span class="basis-full">Sólido = corroborado (≥ 60 %) · Punteado = dudoso · el halo marca el radio aproximado</span>
                 @unless ($hayTeselas)
                     <span>· sin teselas: lienzo neutro</span>
                 @endunless
@@ -211,16 +255,54 @@
                     <dl class="grid grid-cols-4 gap-px overflow-hidden rounded-md border border-border bg-border text-center">
                         <div class="bg-surface px-2 py-2"><dt class="text-[11px] text-muted">Reportes</dt><dd class="font-mono text-base font-semibold" x-text="detalle.reportes_n"></dd></div>
                         <div class="bg-surface px-2 py-2"><dt class="text-[11px] text-muted">Dispositivos</dt><dd class="font-mono text-base font-semibold" x-text="detalle.dispositivos_n"></dd></div>
-                        <div class="bg-surface px-2 py-2"><dt class="text-[11px] text-muted">Confianza</dt><dd class="font-mono text-base font-semibold" x-text="porcentaje(detalle.confianza)"></dd></div>
+                        <div class="bg-surface px-2 py-2"><dt class="text-[11px] text-muted">Confianza</dt><dd class="font-mono text-base font-semibold" x-text="porcentaje(detalle.confianza)"></dd>
+                            <dd class="text-[10px] font-medium" :class="detalle.corroborado ? 'text-healthy' : 'text-degraded'" x-text="detalle.corroborado ? 'corroborado' : 'dudoso'"></dd></div>
                         <div class="bg-surface px-2 py-2"><dt class="text-[11px] text-muted">Base → hoy</dt><dd class="font-mono text-base font-semibold" x-text="`${detalle.prioridad_base}→${detalle.prioridad}`"></dd></div>
                     </dl>
+
+                    <template x-if="esBrecha(detalle.uuid)">
+                        <p class="flex items-start gap-1.5 rounded-md border border-dashed border-down/50 px-3 py-2 text-[13px]">
+                            <span class="mt-0.5 text-down">@include('tablero.partials.icono', ['nombre' => 'alerta', 'clase' => 'size-3.5'])</span>
+                            <span x-text="`Brecha: ${textoBrecha(estado.brechas.find((b) => b.incidente_uuid === detalle.uuid))}`"></span>
+                        </p>
+                    </template>
+
+                    <p class="text-xs text-muted" x-show="detalle.albergue_cercano">
+                        Albergue más cercano:
+                        <span class="text-foreground" x-text="detalle.albergue_cercano ? `${detalle.albergue_cercano.nombre} (${detalle.albergue_cercano.zona}) a ${detalle.albergue_cercano.distancia_m} m` : ''"></span>
+                        · datos de demostración
+                    </p>
+
+                    {{-- Fuentes distintas (T-014): cuántos dispositivos respaldan el incidente y cuánto aporta cada uno --}}
+                    <section class="flex flex-col gap-2" aria-labelledby="titulo-fuentes">
+                        <h3 id="titulo-fuentes" class="flex items-baseline gap-2 text-sm font-semibold">
+                            Fuentes
+                            <span class="font-mono font-normal text-muted" x-text="`${detalle.fuentes.length} ${detalle.fuentes.length === 1 ? 'dispositivo' : 'dispositivos'}`"></span>
+                        </h3>
+                        <p x-show="detalle.posible_rumor" class="flex items-start gap-1.5 rounded-md bg-degraded/12 px-3 py-2 text-[13px] text-foreground">
+                            <span class="mt-0.5 text-degraded">@include('tablero.partials.icono', ['nombre' => 'rumor', 'clase' => 'size-3.5'])</span>
+                            <span x-text="`Posible rumor: un solo dispositivo envió ${detalle.reportes_n} reportes. Se muestra, pero no sube de prioridad.`"></span>
+                        </p>
+                        <ul class="grid grid-cols-1 gap-px overflow-hidden rounded-md border text-xs sm:grid-cols-2"
+                            :class="detalle.corroborado ? 'border-solid border-border bg-border' : 'border-dashed border-border-hover bg-border'">
+                            <template x-for="f in detalle.fuentes" :key="f.device_id">
+                                <li class="flex items-baseline justify-between gap-2 bg-surface px-2.5 py-1.5">
+                                    <span class="font-mono" :title="`dispositivo anónimo ${f.device_id}`" x-text="f.device_id"></span>
+                                    <span class="text-muted">
+                                        <b class="font-mono font-semibold text-foreground" x-text="f.reportes_n"></b>
+                                        <span x-text="f.reportes_n === 1 ? `rep · ${hora(f.primero)}` : `rep · ${hora(f.primero)}–${hora(f.ultimo)}`"></span>
+                                    </span>
+                                </li>
+                            </template>
+                        </ul>
+                    </section>
 
                     {{-- Recomendación de A6: es una sugerencia; solo un humano la aprueba o descarta --}}
                     <section class="flex flex-col gap-3 rounded-md border border-border p-3" aria-labelledby="titulo-recomendacion">
                         <div class="flex items-baseline justify-between gap-2">
                             <h3 id="titulo-recomendacion" class="text-sm font-semibold">Recomendación</h3>
                             <span class="text-[11px] text-muted" x-show="detalle.recomendacion"
-                                x-text="detalle.recomendacion ? `sugerencia · v${detalle.recomendacion.version} · ${detalle.recomendacion.modo}` : ''"></span>
+                                x-text="detalle.recomendacion ? `sugerencia · v${detalle.recomendacion.version} · ${detalle.recomendacion.modo === 'llm' ? 'texto redactado por IA' : 'plantilla'}` : ''"></span>
                         </div>
                         <p class="text-[13px] text-muted" x-show="!detalle.recomendacion">A6 aún no propone una acción para este incidente.</p>
 
@@ -267,7 +349,7 @@
                                 <li class="flex flex-wrap gap-x-2">
                                     <span class="font-mono text-muted" x-text="hora(a.enviada_en)"></span>
                                     <span class="font-medium" x-text="`Alerta a ${a.unidad_nombre ?? a.unidad_id}`"></span>
-                                    <span class="text-muted" x-text="a.ack_en ? `· acuse de campo ${hora(a.ack_en)}` : '· sin acuse de campo aún'"></span>
+                                    <span class="font-medium" :class="a.ack_en ? 'text-healthy' : 'text-degraded'" x-text="`· ${textoAcuse(a)}`"></span>
                                 </li>
                             </template>
                         </ol>
@@ -279,9 +361,17 @@
                                 @include('tablero.partials.icono', ['nombre' => 'alerta', 'clase' => 'size-3.5'])
                                 Contradicciones (se conservan, nadie las resuelve solo)
                             </p>
-                            <ul class="mt-1 list-inside list-disc text-foreground">
+                            <ul class="mt-2 flex flex-col gap-1.5 text-foreground">
                                 <template x-for="c in detalle.contradicciones" :key="c.reportes.join()">
-                                    <li x-text="c.detalle"></li>
+                                    <li class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                                        <span class="font-medium" x-text="c.detalle"></span>
+                                        <span class="text-xs text-muted">entre</span>
+                                        <template x-for="u in c.reportes" :key="u">
+                                            <button type="button" @click="resaltarReporte(u)"
+                                                class="rounded-sm border border-border bg-surface px-1.5 py-0.5 font-mono text-[11px] hover:border-border-hover"
+                                                :title="`Ver el reporte ${u}`" x-text="u.slice(0, 8)"></button>
+                                        </template>
+                                    </li>
                                 </template>
                             </ul>
                         </div>
@@ -291,7 +381,8 @@
                         <h3 class="text-sm font-semibold">Reportes originales <span class="font-mono font-normal text-muted" x-text="detalle.reportes.length"></span></h3>
                         <ol class="flex flex-col divide-y divide-border rounded-md border border-border">
                             <template x-for="r in detalle.reportes" :key="r.uuid">
-                                <li class="flex flex-col gap-1.5 px-3 py-2.5">
+                                <li class="flex flex-col gap-1.5 px-3 py-2.5 transition-colors duration-300" :id="`reporte-${r.uuid}`"
+                                    :class="reporteResaltado === r.uuid ? 'bg-degraded/15' : ''">
                                     <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted">
                                         <span class="font-mono" x-text="hora(r.hora)"></span>
                                         <span class="font-mono" :title="`dispositivo anónimo ${r.device_id}`" x-text="`disp ${r.device_id}`"></span>
@@ -301,6 +392,13 @@
                                         <span class="ml-auto font-mono" :title="r.motivos_incertidumbre.join(' · ') || 'sin motivos'" x-text="`incert. ${porcentaje(r.incertidumbre)}`"></span>
                                     </div>
                                     <p class="text-[13px]" :class="r.texto ? '' : 'italic text-muted'" x-text="r.texto || 'Sin texto'"></p>
+                                    <template x-if="r.elevacion">
+                                        <p class="rounded-sm border border-dashed border-border-hover px-2 py-1.5 text-xs">
+                                            <b class="font-semibold" x-text="`Elevado por IA (sugerencia): ${r.prioridad_reglas} → ${r.elevacion.a}`"></b>
+                                            <span class="block text-muted" x-text="r.elevacion.explicacion"></span>
+                                            <span class="block text-[11px] text-muted" x-text="`${r.elevacion.proveedor} · las reglas daban ${r.prioridad_reglas}`"></span>
+                                        </p>
+                                    </template>
                                     <div class="flex flex-wrap gap-1 text-[11px]" x-show="r.banderas_claves.length || r.personas !== null || r.sin_ubicacion || r.truncado">
                                         <template x-for="b in r.banderas_claves" :key="b">
                                             <span class="rounded-sm bg-surface-2 px-1.5 py-0.5" x-text="b"></span>

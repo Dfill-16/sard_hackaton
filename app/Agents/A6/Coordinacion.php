@@ -8,6 +8,7 @@ use App\Sard\Reglas\Banderas;
 use App\Sard\Reglas\PrioridadIncidente;
 use App\Sard\Reglas\Puntaje;
 use App\Sard\Support\Uuid7;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -33,15 +34,23 @@ final class Coordinacion
 
     private const BANDERAS_AMBULANCIA = ['herido', 'respiratoria'];
 
-    public function __construct(private EventLog $log) {}
+    public const MODO_LLM = 'llm';
+
+    public function __construct(
+        private EventLog $log,
+        private RedaccionLlm $redaccion,
+    ) {}
 
     /**
      * Emite RecomendacionPropuesta si el incidente no tiene una, o si se volvió masivo
      * o cambió de prioridad sin una decisión humana sobre la última recomendación.
      *
+     * Con LLM habilitado, la justificación la redacta el LLM (modo "llm"); las re-propuestas que
+     * ocurren dentro de una decisión humana usan la plantilla para no demorar la respuesta.
+     *
      * @return string|null uuid de la recomendación emitida
      */
-    public function evaluar(string $incidenteUuid): ?string
+    public function evaluar(string $incidenteUuid, bool $redactarConLlm = true): ?string
     {
         $incidente = DB::table('incidentes')->where('uuid', $incidenteUuid)->first();
         if ($incidente === null) {
@@ -53,19 +62,28 @@ final class Coordinacion
 
         if ($ultima !== null) {
             $decidida = DB::table('decisiones')->where('recomendacion_uuid', $ultima->uuid)->exists();
-            $cambio = $ultima->prioridad_al_proponer !== $prioridad || (bool) $ultima->masivo_al_proponer !== (bool) $incidente->masivo;
+            $cambio = $ultima->prioridad_al_proponer !== $prioridad
+                || (bool) $ultima->masivo_al_proponer !== (bool) $incidente->masivo
+                || ($ultima->unidad_id !== null && ! $this->unidadDisponible($ultima->unidad_id));
             if ($decidida || ! $cambio) {
                 return null;
             }
         }
 
         $recomendacionUuid = Uuid7::generar();
+        $version = DB::table('recomendaciones')->where('incidente_uuid', $incidenteUuid)->count() + 1;
+        $propuesta = $this->proponer($incidente, $prioridad);
+        $redaccion = $redactarConLlm
+            ? $this->redaccion->redactar($incidenteUuid, $version, $propuesta)
+            : ['justificacion' => $propuesta['justificacion'], 'modo' => self::MODO];
+
         $this->log->append('RecomendacionPropuesta', [
             'recomendacion_uuid' => $recomendacionUuid,
             'incidente_uuid' => $incidenteUuid,
-            'version' => DB::table('recomendaciones')->where('incidente_uuid', $incidenteUuid)->count() + 1,
-            ...$this->proponer($incidente, $prioridad),
-            'modo' => self::MODO,
+            'version' => $version,
+            ...$propuesta,
+            'justificacion' => $redaccion['justificacion'],
+            'modo' => $redaccion['modo'],
         ], $incidenteUuid);
 
         return $recomendacionUuid;
@@ -78,17 +96,7 @@ final class Coordinacion
      */
     public function proponer(object $incidente, string $prioridad): array
     {
-        $miembros = DB::table('incidente_reporte')
-            ->join('reportes', 'reportes.reporte_uuid', '=', 'incidente_reporte.reporte_uuid')
-            ->where('incidente_reporte.incidente_uuid', $incidente->uuid)
-            ->get(['reportes.banderas', 'reportes.personas', 'reportes.texto']);
-
-        $banderas = 0;
-        foreach ($miembros as $miembro) {
-            $personas = $miembro->personas === null ? null : (int) $miembro->personas;
-            $banderas |= Puntaje::calcular((int) $miembro->banderas, $personas, (string) $miembro->texto)['banderas_efectivas'];
-        }
-        $claves = Banderas::claves($banderas);
+        $miembros = $this->miembros($incidente->uuid);
 
         $pendientes = [];
         if ($miembros->every(fn (object $m): bool => $m->personas === null)) {
@@ -102,7 +110,7 @@ final class Coordinacion
             $pendientes[] = 'posible rumor: verificar con otra fuente';
         }
 
-        [$tipoUnidad, $pendientesUnidad] = $this->tipoDeUnidad((int) $incidente->tipo, $claves);
+        [$tipoUnidad, $pendientesUnidad] = $this->unidadRequerida($incidente, $miembros);
         $pendientes = [...$pendientesUnidad, ...$pendientes];
 
         $encabezado = sprintf(
@@ -144,6 +152,33 @@ final class Coordinacion
             'pendientes' => $pendientes,
             'distancia_m' => $unidad['distancia_m'],
         ];
+    }
+
+    /**
+     * Tipo de unidad que necesita un incidente, según las banderas (marcadas o inferidas) de todos
+     * sus reportes y su tipo. Lo usan A6 y el cálculo de brechas del tablero (T-017).
+     *
+     * @param  Collection<int, object>|null  $miembros  reportes del incidente (se consultan si no se pasan)
+     * @return array{0: string|null, 1: array<int, string>}
+     */
+    public function unidadRequerida(object $incidente, ?Collection $miembros = null): array
+    {
+        $banderas = 0;
+        foreach ($miembros ?? $this->miembros($incidente->uuid) as $miembro) {
+            $personas = $miembro->personas === null ? null : (int) $miembro->personas;
+            $banderas |= Puntaje::calcular((int) $miembro->banderas, $personas, (string) $miembro->texto)['banderas_efectivas'];
+        }
+
+        return $this->tipoDeUnidad((int) $incidente->tipo, Banderas::claves($banderas));
+    }
+
+    /** @return Collection<int, object> */
+    private function miembros(string $incidenteUuid): Collection
+    {
+        return DB::table('incidente_reporte')
+            ->join('reportes', 'reportes.reporte_uuid', '=', 'incidente_reporte.reporte_uuid')
+            ->where('incidente_reporte.incidente_uuid', $incidenteUuid)
+            ->get(['reportes.banderas', 'reportes.personas', 'reportes.texto']);
     }
 
     /**
@@ -189,6 +224,28 @@ final class Coordinacion
     }
 
     /**
+     * La unidad acaba de asignarse: los demás incidentes cuya recomendación pendiente la proponía
+     * reciben una versión nueva con otra unidad (evaluar() solo actúa si la última sigue sin decidir).
+     */
+    private function reproponerPorUnidadAsignada(string $unidadId, string $incidenteAtendido): void
+    {
+        DB::table('recomendaciones')
+            ->where('unidad_id', $unidadId)
+            ->where('incidente_uuid', '!=', $incidenteAtendido)
+            ->whereNotIn('uuid', DB::table('decisiones')->select('recomendacion_uuid'))
+            ->distinct()
+            ->pluck('incidente_uuid')
+            ->each(fn (string $incidente) => $this->evaluar($incidente, redactarConLlm: false));
+    }
+
+    /** Una unidad está disponible si la semilla la marca así y ninguna alerta aprobada la tiene asignada. */
+    public function unidadDisponible(string $unidadId): bool
+    {
+        return DB::table('unidades')->where('id', $unidadId)->where('estado_inicial', 'disponible')->exists()
+            && ! DB::table('unidades_estado')->where('unidad_id', $unidadId)->where('estado', 'asignada')->exists();
+    }
+
+    /**
      * Registra la decisión humana y, si es «aprobar» con unidad, emite la alerta a campo.
      * Una segunda decisión sobre la misma recomendación se conserva (el incidente queda en conflicto)
      * y nunca dispara una segunda alerta.
@@ -220,6 +277,8 @@ final class Coordinacion
                 'unidad_id' => $recomendacion->unidad_id,
                 'texto' => $this->textoAlerta($recomendacion),
             ], $alertaUuid);
+
+            $this->reproponerPorUnidadAsignada($recomendacion->unidad_id, $recomendacion->incidente_uuid);
         }
 
         return ['decision_uuid' => $decisionUuid, 'alerta_uuid' => $alertaUuid, 'en_conflicto' => $previas->isNotEmpty()];
@@ -232,7 +291,7 @@ final class Coordinacion
         $texto = sprintf(
             '%s %s · %d rep · %.5f,%.5f',
             $recomendacion->prioridad_al_proponer,
-            Banderas::nombreTipo((int) ($incidente->tipo ?? 0)),
+            mb_strtoupper(mb_substr(Banderas::nombreTipo((int) ($incidente->tipo ?? 0)), 0, 1)).mb_substr(Banderas::nombreTipo((int) ($incidente->tipo ?? 0)), 1),
             (int) ($incidente->reportes_n ?? 0),
             (float) ($incidente->lat ?? 0),
             (float) ($incidente->lon ?? 0),

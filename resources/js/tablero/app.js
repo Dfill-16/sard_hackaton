@@ -18,6 +18,31 @@ const FALLOS_ANTES_DE_CAMBIAR = 3;
 const LIMITES_TESELAS = [[4.95, -75.65], [5.2, -75.35]];
 const ZOOM_MAXIMO_DATOS = 15;
 
+/**
+ * T-017: íconos de las capas de demostración (trazo 1.75 px, 24×24). Siempre van con su
+ * nombre en el tooltip; el estado de una unidad también va escrito, no solo en color.
+ */
+const ICONOS_CAPA = {
+    Albergue: '<path d="M4 11 12 4l8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/>',
+    Acopio: '<path d="m12 3 8 4v10l-8 4-8-4V7z"/><path d="m4 7 8 4 8-4M12 11v10"/>',
+    Sangre: '<path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"/>',
+    ambulancia: '<path d="M9.5 4h5v5.5H20v5h-5.5V20h-5v-5.5H4v-5h5.5z"/>',
+    bomberos: '<path d="M12 21c-3.9 0-6.5-2.6-6.5-6 0-3.5 2.7-5.6 3.5-9 2 1.3 3 3.2 3 5 .9-.6 1.6-1.6 1.9-2.8 2.3 1.9 4.6 4.4 4.6 6.8 0 3.4-2.6 6-6.5 6z"/>',
+};
+
+function iconoCapa(clave, clase) {
+    return L.divIcon({
+        className: `icono-capa ${clase}`,
+        html: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONOS_CAPA[clave] ?? ''}</svg>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+    });
+}
+
+/** T-014: trazo punteado para lo dudoso y opacidad mínima del marcador (confianza 0). */
+const TRAZO_DUDOSO = '4 4';
+const OPACIDAD_MINIMA = 0.35;
+
 /** Clases de la etiqueta de prioridad: relleno + texto con contraste (nunca solo color: siempre lleva «P1»…). */
 const CLASES_PRIORIDAD = {
     P1: 'bg-p1 text-p1-ink',
@@ -50,6 +75,7 @@ function tablero(config) {
     let mapa = null;
     let capaMarcadores = null;
     let capaFondo = null;
+    let capaDemo = null;
     let archivoTeselas = null;
     let encuadreHecho = false;
 
@@ -58,6 +84,77 @@ function tablero(config) {
         detalle: null,
         seleccionado: null,
         contactando: null,
+        reporteResaltado: null,
+        verRecursos: leerLocal('sard-capa-recursos') === '1',
+        verUnidades: leerLocal('sard-capa-unidades') !== '0',
+
+        alternarCapa(capa) {
+            if (capa === 'recursos') {
+                this.verRecursos = !this.verRecursos;
+                escribirLocal('sard-capa-recursos', this.verRecursos ? '1' : '0');
+            } else {
+                this.verUnidades = !this.verUnidades;
+                escribirLocal('sard-capa-unidades', this.verUnidades ? '1' : '0');
+            }
+            this.pintarCapas();
+        },
+
+        /** Capas de demostración (T-017): recursos de semilla y unidades con su estado. */
+        pintarCapas() {
+            if (!capaDemo || !this.estado) {
+                return;
+            }
+
+            capaDemo.clearLayers();
+            if (this.verRecursos) {
+                for (const recurso of this.estado.recursos ?? []) {
+                    L.marker([recurso.lat, recurso.lon], { icon: iconoCapa(recurso.tipo, 'recurso'), keyboard: false })
+                        .bindTooltip(`${recurso.tipo} · ${recurso.nombre} (${recurso.zona}) · datos de demostración`, { direction: 'top', offset: [0, -10] })
+                        .addTo(capaDemo);
+                }
+            }
+            if (this.verUnidades) {
+                for (const unidad of this.estado.unidades ?? []) {
+                    L.marker([unidad.lat, unidad.lon], { icon: iconoCapa(unidad.tipo, `unidad unidad-${unidad.estado}`), keyboard: false })
+                        .bindTooltip(`${unidad.nombre} · ${unidad.estado} · datos de demostración`, { direction: 'top', offset: [0, -10] })
+                        .addTo(capaDemo);
+                }
+            }
+        },
+
+        /** T-015: «Acuse: pendiente · hace N s» o «Acuse: recibido en N s» (de AlertaCampoEnviada a AckCampo). */
+        textoAcuse(alerta) {
+            const enviada = new Date(alerta.enviada_en).getTime();
+            if (alerta.ack_en) {
+                return `Acuse: recibido en ${Math.max(0, Math.round((new Date(alerta.ack_en).getTime() - enviada) / 1000))} s`;
+            }
+
+            return `Acuse: pendiente · hace ${Math.max(0, Math.round((this.ahora - enviada) / 1000))} s`;
+        },
+
+        esBrecha(uuid) {
+            return (this.estado?.brechas ?? []).some((b) => b.incidente_uuid === uuid);
+        },
+
+        textoBrecha(brecha) {
+            const cercana = brecha.unidad_mas_cercana;
+            const unidad = brecha.unidad_requerida === 'ambulancia' ? 'ambulancia' : 'bomberos';
+
+            return cercana
+                ? `Sin ${unidad} disponible a ≤ 3 km · la más cercana: ${cercana.nombre} a ${(cercana.distancia_m / 1000).toFixed(1)} km`
+                : `Sin ${unidad} disponible en la ciudad`;
+        },
+
+        /** Lleva la vista al reporte original citado en una contradicción y lo resalta un momento. */
+        resaltarReporte(uuid) {
+            this.reporteResaltado = uuid;
+            document.getElementById(`reporte-${uuid}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            setTimeout(() => {
+                if (this.reporteResaltado === uuid) {
+                    this.reporteResaltado = null;
+                }
+            }, 2500);
+        },
         verTodos: false,
         fallos: 0,
         nodoConectado: config.nodo,
@@ -96,6 +193,9 @@ function tablero(config) {
                 });
                 const cuerpo = await respuesta.json().catch(() => ({}));
                 if (!respuesta.ok) {
+                    if (cuerpo.error === 'unidad_no_disponible') {
+                        await this.abrir(this.detalle.uuid);
+                    }
                     this.errorDecision = cuerpo.detalle ?? cuerpo.message ?? `No se pudo registrar (HTTP ${respuesta.status}).`;
                     return false;
                 }
@@ -127,12 +227,13 @@ function tablero(config) {
             this.iniciarMapa();
             this.consultar();
             setInterval(() => this.consultar(), config.pollingMs);
-            setInterval(() => (this.ahora = Date.now()), 15000);
+            setInterval(() => (this.ahora = Date.now()), 1000);
         },
 
         iniciarMapa() {
             mapa = L.map(this.$refs.mapa, { zoomControl: true, minZoom: 11, maxZoom: 18 }).setView(CENTRO_MANIZALES, 14);
             mapa.attributionControl.setPrefix(false);
+            capaDemo = L.layerGroup().addTo(mapa);
             capaMarcadores = L.layerGroup().addTo(mapa);
             this.cargarTeselas();
         },
@@ -195,6 +296,7 @@ function tablero(config) {
                 this.conexion = 'conectado';
                 this.ahora = Date.now();
                 this.pintarMarcadores();
+                this.pintarCapas();
             } catch (error) {
                 this.fallos++;
                 this.conexion = 'reintentando';
@@ -270,6 +372,25 @@ function tablero(config) {
             for (const incidente of conUbicacion) {
                 const color = variable(`--sard-${incidente.prioridad.toLowerCase()}`);
                 const elegido = incidente.uuid === this.seleccionado;
+                const trazo = incidente.corroborado ? null : TRAZO_DUDOSO;
+
+                // Halo de incertidumbre: radio aproximado en metros; punteado si el incidente es dudoso.
+                L.circle([incidente.lat, incidente.lon], {
+                    radius: incidente.radio_m ?? 60,
+                    color,
+                    weight: 1,
+                    opacity: 0.7,
+                    dashArray: trazo,
+                    fillColor: color,
+                    fillOpacity: 0.08,
+                    interactive: false,
+                }).addTo(capaMarcadores);
+
+                if (this.esBrecha(incidente.uuid)) {
+                    L.circleMarker([incidente.lat, incidente.lon], {
+                        radius: 24, color: variable('--sard-down'), weight: 2, dashArray: '2 5', fill: false, interactive: false,
+                    }).addTo(capaMarcadores);
+                }
 
                 if (incidente.masivo) {
                     L.circleMarker([incidente.lat, incidente.lon], {
@@ -279,12 +400,17 @@ function tablero(config) {
 
                 const marcador = L.circleMarker([incidente.lat, incidente.lon], {
                     radius: (elegido ? 10 : 7) + Math.min(4, incidente.reportes_n - 1),
-                    color: elegido ? variable('--sard-foreground') : borde,
-                    weight: elegido ? 3 : 1.5,
+                    color: elegido ? variable('--sard-foreground') : (incidente.corroborado ? borde : color),
+                    weight: elegido ? 3 : 2,
+                    dashArray: elegido ? null : trazo,
                     fillColor: color,
-                    fillOpacity: 0.9,
+                    // Opacidad según la confianza: lo dudoso se ve más tenue, pero nunca desaparece.
+                    fillOpacity: OPACIDAD_MINIMA + (1 - OPACIDAD_MINIMA) * Math.min(1, incidente.confianza ?? 0),
                 });
-                marcador.bindTooltip(`${incidente.prioridad} · ${incidente.tipo_nombre} · ${incidente.reportes_n} rep.`, { direction: 'top', offset: [0, -6] });
+                marcador.bindTooltip(
+                    `${incidente.prioridad} · ${incidente.tipo_nombre} · ${incidente.reportes_n} rep. · ${this.porcentaje(incidente.confianza)} ${incidente.corroborado ? 'corroborado' : 'dudoso'}`,
+                    { direction: 'top', offset: [0, -6] },
+                );
                 marcador.on('click', () => this.abrir(incidente.uuid));
                 marcador.addTo(capaMarcadores);
             }
