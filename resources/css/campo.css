@@ -1,0 +1,6 @@
+@import 'tailwindcss';
+@import './sard-tokens.css';
+
+@source '../views/campo/**/*.blade.php';
+@source '../views/pwa/partials/icono.blade.php';
+@source '../js/campo/**/*.js';

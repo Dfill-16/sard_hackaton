@@ -10,6 +10,8 @@
       - B y C: php artisan queue:work     (ProcesarReporte: A2 + A3 + A6)
                php artisan sard:a5        (latidos, failover, unión al volver)
                php artisan sard:replicar  (réplica del log en el seguidor)
+               php artisan sard:alertas   (alertas aprobadas hacia D, hasta el acuse)
+      - D:     php artisan sard:campo     (acuses de campo hacia el líder)
     Los registros quedan en storage/logs/sard-<nodo>-<proceso>.log y los PID en
     storage/framework/sard-pids-<nodo>.txt.
 
@@ -42,7 +44,8 @@ $logs = Join-Path $raiz 'storage/logs'
 $trabajadoresBC = @(
     @('queue:work', '--sleep=1', '--tries=3'),
     @('sard:a5'),
-    @('sard:replicar')
+    @('sard:replicar'),
+    @('sard:alertas')
 )
 
 $catalogo = @(
@@ -50,7 +53,7 @@ $catalogo = @(
     @{ Rol = 'CANAL'; Puerto = 8010; Base = 'canal.sqlite';  Workers = @(, @('sard:canal')) },
     @{ Rol = 'B';     Puerto = 8002; Base = 'nodo_b.sqlite'; Workers = $trabajadoresBC },
     @{ Rol = 'C';     Puerto = 8003; Base = 'nodo_c.sqlite'; Workers = $trabajadoresBC },
-    @{ Rol = 'D';     Puerto = 8004; Base = 'nodo_d.sqlite'; Workers = @() }
+    @{ Rol = 'D';     Puerto = 8004; Base = 'nodo_d.sqlite'; Workers = @(, @('sard:campo')) }
 )
 
 if (Test-Path (Join-Path $raiz 'storage/framework/sard-pids.txt')) {
@@ -107,5 +110,5 @@ foreach ($nodo in $catalogo | Where-Object { $Nodos -contains $_.Rol }) {
 Remove-Item Env:NODE_ROLE, Env:DB_DATABASE, Env:APP_URL, Env:DB_CONNECTION, Env:QUEUE_CONNECTION -ErrorAction SilentlyContinue
 
 Write-Host ''
-Write-Host 'Tablero: http://127.0.0.1:8002/tablero (o :8003 en C)  -  PWA: http://127.0.0.1:8001/pwa'
+Write-Host 'Tablero: http://127.0.0.1:8002/tablero (o :8003 en C)  -  PWA: http://127.0.0.1:8001/pwa  -  Campo: http://127.0.0.1:8004/campo'
 Write-Host 'Matar B en vivo: ./scripts/matar-nodo.ps1 B  -  Detener todo: ./scripts/stop.ps1'

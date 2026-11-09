@@ -3,6 +3,7 @@
 namespace App\Node\B;
 
 use App\Agents\A1\Recepcion;
+use App\Agents\A6\EnvioAlertas;
 use App\Channel\ClienteCanal;
 use App\Jobs\ProcesarReporte;
 use App\Protocol\PayloadInvalidoException;
@@ -11,6 +12,7 @@ use App\Sard\Log\EventLog;
 use App\Sard\Nodo\EstadoNodo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -63,5 +65,27 @@ final class EntregaController
         ]);
 
         return response()->json(['reporte_uuid' => $uuid, 'duplicado' => $duplicado, 'nodo' => $nodo]);
+    }
+
+    /**
+     * POST /api/entrega/ack-campo {alerta_uuid, recibido_en_campo} (desde el CANAL, T-015).
+     * El líder emite AckCampo una sola vez y confirma a D. Un seguidor responde 409 (D reintenta).
+     */
+    public function ackCampo(Request $request, EnvioAlertas $alertas): Response|JsonResponse
+    {
+        if (! $this->estado->esLider()) {
+            return response()->json(['error' => 'no_lider', 'detalle' => 'Este nodo es seguidor.'], 409);
+        }
+
+        $datos = json_decode($request->getContent(), true);
+        if (! is_array($datos) || ! is_string($datos['alerta_uuid'] ?? null) || ! is_string($datos['recibido_en_campo'] ?? null)) {
+            return response()->json(['error' => 'acuse_invalido', 'detalle' => 'Se espera {alerta_uuid, recibido_en_campo}.'], 400);
+        }
+
+        if ($alertas->registrarAcuse($datos['alerta_uuid'], $datos['recibido_en_campo']) === null) {
+            return response()->json(['error' => 'no_encontrada', 'detalle' => 'La alerta no existe en este nodo.'], 404);
+        }
+
+        return response()->noContent();
     }
 }

@@ -11,6 +11,8 @@ use App\Node\A\ReportesController;
 use App\Node\A\SaludController;
 use App\Node\B\ControlController;
 use App\Node\B\EntregaController;
+use App\Node\D\CampoController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,6 +22,11 @@ use Illuminate\Support\Facades\Route;
 */
 Route::get('/salud', SaludController::class);
 
+// POST /api/lider existe en A (T-012) y en D (T-015) con la misma URL: se atiende según el rol.
+Route::post('/lider', fn (Request $request) => config('sard.nodo_role') === 'D'
+    ? app(CampoController::class)->lider($request)
+    : app(LiderController::class)($request))->middleware(['rol:A,D', 'fencing']);
+
 /*
 |--------------------------------------------------------------------------
 | Nodo A :8001
@@ -28,8 +35,19 @@ Route::get('/salud', SaludController::class);
 Route::middleware(['solo_nodo_a', 'fencing'])->group(function () {
     Route::post('/reportes', [ReportesController::class, 'almacenar']);
     Route::post('/acks', AcksController::class);
-    Route::post('/lider', LiderController::class);
     Route::get('/metricas', MetricasController::class);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Nodo D :8004 · campo (T-015)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['rol:D', 'fencing'])->group(function () {
+    Route::get('/campo/alertas', [CampoController::class, 'alertas']);
+    Route::post('/campo/ack', [CampoController::class, 'ack']);
+    Route::post('/entrega/alerta', [CampoController::class, 'entregaAlerta']);
+    Route::post('/entrega/ack-recibido', [CampoController::class, 'ackRecibido']);
 });
 
 /*
@@ -50,6 +68,7 @@ Route::middleware('rol:CANAL')->prefix('canal')->group(function () {
 */
 Route::middleware(['rol:B,C', 'fencing'])->group(function () {
     Route::post('/entrega/reporte', [EntregaController::class, 'reporte']);
+    Route::post('/entrega/ack-campo', [EntregaController::class, 'ackCampo']);
     Route::get('/tablero/estado', EstadoController::class);
     Route::get('/incidentes/{uuid}', IncidenteController::class);
     Route::post('/decisiones', DecisionController::class);
