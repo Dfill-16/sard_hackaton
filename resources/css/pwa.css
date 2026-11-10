@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import './sard-tokens.css';
 
+@source '../views/partials/**/*.blade.php';
 @source '../views/pwa/**/*.blade.php';
 @source '../js/pwa/**/*.js';
 

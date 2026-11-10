@@ -1,4 +1,5 @@
 import Alpine from 'alpinejs';
+import { instalarIdioma, locale, t } from '../i18n/index.js';
 
 /**
  * Vista de campo del Nodo D (T-015): lista las alertas aprobadas y envía el acuse «Recibido».
@@ -50,7 +51,7 @@ function campo(config) {
                 }
                 await this.consultar();
             } catch (error) {
-                this.error = 'No se pudo registrar el acuse en este equipo. Toca «Recibido» de nuevo.';
+                this.error = t('No se pudo registrar el acuse en este equipo. Toca «Recibido» de nuevo.');
             } finally {
                 this.enviando = null;
             }
@@ -69,20 +70,21 @@ function campo(config) {
         },
 
         hora(iso) {
-            return iso ? new Date(iso).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+            return iso ? new Date(iso).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
         },
 
         haceCuanto(iso) {
             const segundos = Math.max(0, Math.round((this.ahora - new Date(iso).getTime()) / 1000));
             if (segundos < 60) {
-                return `hace ${segundos} s`;
+                return t('hace :s s', { s: segundos });
             }
 
-            return `hace ${Math.floor(segundos / 60)} min`;
+            return t('hace :m min', { m: Math.floor(segundos / 60) });
         },
     };
 }
 
 window.campo = campo;
 window.Alpine = Alpine;
+instalarIdioma(Alpine, { titulo: 'Campo · SARD' });
 Alpine.start();

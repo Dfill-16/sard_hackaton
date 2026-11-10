@@ -5,6 +5,7 @@ import {
     ESTADO, buscarRepetido, bytesJsonEquivalente, bytesTexto, esAckDe, esperaMs,
     nuevoDeviceId, recortarTexto, recuperarTrasRecarga, uuidV7, vencidos,
 } from './cola.js';
+import { instalarIdioma, locale, t } from '../i18n/index.js';
 
 /**
  * PWA ciudadana (T-005): reporte en 2 a 4 toques que funciona sin red.
@@ -156,10 +157,10 @@ function pwa(config) {
             });
 
             this.aviso = repetido
-                ? 'Ya tenías este reporte pendiente: lo actualizamos en lugar de duplicarlo.'
+                ? t('Ya tenías este reporte pendiente: lo actualizamos en lugar de duplicarlo.')
                 : this.sinConexion()
-                    ? 'Guardado en tu teléfono. Se enviará solo cuando haya señal.'
-                    : 'Guardado. Enviando a la central…';
+                    ? t('Guardado en tu teléfono. Se enviará solo cuando haya señal.')
+                    : t('Guardado. Enviando a la central…');
             this.tipo = null;
             this.marcadas = 0;
             this.personas = 0;
@@ -233,28 +234,28 @@ function pwa(config) {
         },
 
         nombreTipo(valor) {
-            return this.tipos.find((t) => t.valor === valor)?.nombre ?? 'Otro';
+            return t(this.tipos.find((tipo) => tipo.valor === valor)?.nombre ?? 'Otra emergencia');
         },
 
         hora(milisegundos) {
-            return new Date(milisegundos).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+            return new Date(milisegundos).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' });
         },
 
         textoEstado(registro) {
             if (registro.estado === ESTADO.CONFIRMADO) {
-                return 'Recibido por la central';
+                return t('Recibido por la central');
             }
             if (registro.estado === ESTADO.ENVIADO) {
-                return 'Enviando…';
+                return t('Enviando…');
             }
             if (this.sinConexion()) {
-                return 'Pendiente · sin señal, se guarda aquí';
+                return t('Pendiente · sin señal, se guarda aquí');
             }
             const segundos = Math.max(0, Math.ceil((registro.proximo_intento - this.ahora) / 1000));
 
             return registro.intentos === 0 || segundos === 0
-                ? 'Pendiente · enviando'
-                : `Pendiente · reintento en ${segundos} s`;
+                ? t('Pendiente · enviando')
+                : t('Pendiente · reintento en :s s', { s: segundos });
         },
 
         get pendientes() {
@@ -265,4 +266,5 @@ function pwa(config) {
 
 window.pwa = pwa;
 window.Alpine = Alpine;
+instalarIdioma(Alpine, { titulo: 'Reportar emergencia · SARD' });
 Alpine.start();

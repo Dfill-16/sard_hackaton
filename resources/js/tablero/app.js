@@ -3,6 +3,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { FileSource, PMTiles } from 'pmtiles';
 import { leafletLayer } from 'protomaps-leaflet';
+import { idiomaActual, instalarIdioma, locale, t, td } from '../i18n/index.js';
 
 /**
  * Tablero de coordinación (T-009).
@@ -38,6 +39,16 @@ function iconoCapa(clave, clase) {
         iconAnchor: [12, 12],
     });
 }
+
+/**
+ * Lista de incidentes redimensionable (pantallas ≥ 1024 px). Por debajo del umbral se pliega
+ * a un riel; el ancho y el plegado se recuerdan en el navegador.
+ */
+const ANCHO_LISTA_INICIAL = 380;
+const ANCHO_LISTA_MINIMO = 280;
+const UMBRAL_PLEGAR = 200;
+const PASO_TECLADO = 24;
+const ANCHO_MAPA_MINIMO = 320;
 
 /** T-014: trazo punteado para lo dudoso y opacidad mínima del marcador (confianza 0). */
 const TRAZO_DUDOSO = '4 4';
@@ -87,6 +98,87 @@ function tablero(config) {
         reporteResaltado: null,
         verRecursos: leerLocal('sard-capa-recursos') === '1',
         verUnidades: leerLocal('sard-capa-unidades') !== '0',
+        anchoLista: Number(leerLocal('sard-ancho-lista')) || ANCHO_LISTA_INICIAL,
+        listaPlegada: leerLocal('sard-lista-plegada') === '1',
+        arrastrando: false,
+
+        /** Ancho máximo: la lista nunca deja el mapa por debajo de ANCHO_MAPA_MINIMO. */
+        anchoMaximo() {
+            const detalle = this.detalle ? Math.min(460, Math.max(340, window.innerWidth * 0.32)) : 0;
+
+            return Math.max(ANCHO_LISTA_MINIMO, Math.round(window.innerWidth - detalle - ANCHO_MAPA_MINIMO));
+        },
+
+        fijarAnchoLista(ancho) {
+            if (ancho < UMBRAL_PLEGAR) {
+                this.plegarLista(true);
+                return;
+            }
+            this.listaPlegada = false;
+            this.anchoLista = Math.round(Math.min(this.anchoMaximo(), Math.max(ANCHO_LISTA_MINIMO, ancho)));
+            this.ajustarMapa();
+        },
+
+        plegarLista(plegada) {
+            this.listaPlegada = plegada;
+            if (!plegada && this.anchoLista < ANCHO_LISTA_MINIMO) {
+                this.anchoLista = ANCHO_LISTA_INICIAL;
+            }
+            this.guardarLista();
+            this.ajustarMapa();
+        },
+
+        guardarLista() {
+            escribirLocal('sard-ancho-lista', String(this.anchoLista));
+            escribirLocal('sard-lista-plegada', this.listaPlegada ? '1' : '0');
+        },
+
+        /** Arrastre del separador: el ancho sigue al puntero desde el borde izquierdo de la ventana. */
+        empezarArrastre(evento) {
+            if (evento.button !== 0) {
+                return;
+            }
+            evento.preventDefault();
+            const separador = evento.currentTarget;
+            separador.setPointerCapture(evento.pointerId);
+            this.arrastrando = true;
+
+            const mover = (e) => this.fijarAnchoLista(e.clientX);
+            const soltar = () => {
+                this.arrastrando = false;
+                separador.removeEventListener('pointermove', mover);
+                separador.removeEventListener('pointerup', soltar);
+                separador.removeEventListener('pointercancel', soltar);
+                this.guardarLista();
+                this.ajustarMapa();
+            };
+            separador.addEventListener('pointermove', mover);
+            separador.addEventListener('pointerup', soltar);
+            separador.addEventListener('pointercancel', soltar);
+        },
+
+        teclaSeparador(evento) {
+            if (evento.key === 'ArrowLeft') {
+                // Por debajo del mínimo, la siguiente pulsación pliega la lista.
+                const siguiente = this.anchoLista - PASO_TECLADO;
+                if (!this.listaPlegada) {
+                    this.fijarAnchoLista(siguiente < ANCHO_LISTA_MINIMO ? 0 : siguiente);
+                }
+            } else if (evento.key === 'ArrowRight') {
+                this.fijarAnchoLista(this.listaPlegada ? ANCHO_LISTA_MINIMO : this.anchoLista + PASO_TECLADO);
+            } else if (evento.key === 'Enter' || evento.key === ' ') {
+                this.plegarLista(!this.listaPlegada);
+            } else {
+                return;
+            }
+            evento.preventDefault();
+            this.guardarLista();
+        },
+
+        /** Leaflet necesita recalcular su tamaño cuando cambia el ancho de su contenedor. */
+        ajustarMapa() {
+            requestAnimationFrame(() => mapa?.invalidateSize({ pan: false }));
+        },
 
         alternarCapa(capa) {
             if (capa === 'recursos') {
@@ -109,14 +201,14 @@ function tablero(config) {
             if (this.verRecursos) {
                 for (const recurso of this.estado.recursos ?? []) {
                     L.marker([recurso.lat, recurso.lon], { icon: iconoCapa(recurso.tipo, 'recurso'), keyboard: false })
-                        .bindTooltip(`${recurso.tipo} · ${recurso.nombre} (${recurso.zona}) · datos de demostración`, { direction: 'top', offset: [0, -10] })
+                        .bindTooltip(`${td(recurso.tipo)} · ${recurso.nombre} (${recurso.zona}) · ${t('datos de demostración')}`, { direction: 'top', offset: [0, -10] })
                         .addTo(capaDemo);
                 }
             }
             if (this.verUnidades) {
                 for (const unidad of this.estado.unidades ?? []) {
                     L.marker([unidad.lat, unidad.lon], { icon: iconoCapa(unidad.tipo, `unidad unidad-${unidad.estado}`), keyboard: false })
-                        .bindTooltip(`${unidad.nombre} · ${unidad.estado} · datos de demostración`, { direction: 'top', offset: [0, -10] })
+                        .bindTooltip(`${unidad.nombre} · ${td(unidad.estado)} · ${t('datos de demostración')}`, { direction: 'top', offset: [0, -10] })
                         .addTo(capaDemo);
                 }
             }
@@ -126,10 +218,10 @@ function tablero(config) {
         textoAcuse(alerta) {
             const enviada = new Date(alerta.enviada_en).getTime();
             if (alerta.ack_en) {
-                return `Acuse: recibido en ${Math.max(0, Math.round((new Date(alerta.ack_en).getTime() - enviada) / 1000))} s`;
+                return t('Acuse: recibido en :s s', { s: Math.max(0, Math.round((new Date(alerta.ack_en).getTime() - enviada) / 1000)) });
             }
 
-            return `Acuse: pendiente · hace ${Math.max(0, Math.round((this.ahora - enviada) / 1000))} s`;
+            return t('Acuse: pendiente · hace :s s', { s: Math.max(0, Math.round((this.ahora - enviada) / 1000)) });
         },
 
         esBrecha(uuid) {
@@ -138,11 +230,11 @@ function tablero(config) {
 
         textoBrecha(brecha) {
             const cercana = brecha.unidad_mas_cercana;
-            const unidad = brecha.unidad_requerida === 'ambulancia' ? 'ambulancia' : 'bomberos';
+            const unidad = td(brecha.unidad_requerida === 'ambulancia' ? 'ambulancia' : 'bomberos');
 
             return cercana
-                ? `Sin ${unidad} disponible a ≤ 3 km · la más cercana: ${cercana.nombre} a ${(cercana.distancia_m / 1000).toFixed(1)} km`
-                : `Sin ${unidad} disponible en la ciudad`;
+                ? t('Sin :unidad disponible a ≤ 3 km · la más cercana: :nombre a :km km', { unidad, nombre: cercana.nombre, km: (cercana.distancia_m / 1000).toFixed(1) })
+                : t('Sin :unidad disponible en la ciudad', { unidad });
         },
 
         /** Lleva la vista al reporte original citado en una contradicción y lo resalta un momento. */
@@ -175,7 +267,7 @@ function tablero(config) {
         async decidir(accion, motivo = null) {
             this.errorDecision = null;
             if (!this.operador.trim()) {
-                this.errorDecision = 'Escribe tu nombre en «Operador» (arriba) antes de decidir.';
+                this.errorDecision = t('Escribe tu nombre en «Operador» (arriba) antes de decidir.');
                 return false;
             }
 
@@ -196,7 +288,7 @@ function tablero(config) {
                     if (cuerpo.error === 'unidad_no_disponible') {
                         await this.abrir(this.detalle.uuid);
                     }
-                    this.errorDecision = cuerpo.detalle ?? cuerpo.message ?? `No se pudo registrar (HTTP ${respuesta.status}).`;
+                    this.errorDecision = cuerpo.detalle ?? cuerpo.message ?? t('No se pudo registrar (HTTP :status).', { status: respuesta.status });
                     return false;
                 }
 
@@ -204,7 +296,7 @@ function tablero(config) {
                 this.consultar();
                 return true;
             } catch (error) {
-                this.errorDecision = 'Sin conexión con el líder. La decisión no se registró; inténtalo de nuevo.';
+                this.errorDecision = t('Sin conexión con el líder. La decisión no se registró; inténtalo de nuevo.');
                 return false;
             } finally {
                 this.enviandoDecision = false;
@@ -225,9 +317,21 @@ function tablero(config) {
 
         iniciar() {
             this.iniciarMapa();
+            // Si la ventana se angosta, la lista no puede dejar el mapa sin espacio.
+            window.addEventListener('resize', () => {
+                if (!this.listaPlegada && this.anchoLista > this.anchoMaximo()) {
+                    this.anchoLista = this.anchoMaximo();
+                }
+            });
             this.consultar();
             setInterval(() => this.consultar(), config.pollingMs);
             setInterval(() => (this.ahora = Date.now()), 1000);
+            // Los textos del mapa (tooltips y nombres de calles) no son reactivos: se repintan al cambiar de idioma.
+            window.addEventListener('sard-idioma', () => {
+                this.ponerFondo();
+                this.pintarMarcadores();
+                this.pintarCapas();
+            });
         },
 
         iniciarMapa() {
@@ -273,7 +377,7 @@ function tablero(config) {
             capaFondo = leafletLayer({
                 url: archivoTeselas,
                 flavor: this.oscuro ? 'dark' : 'light',
-                lang: 'es',
+                lang: idiomaActual(),
                 maxDataZoom: ZOOM_MAXIMO_DATOS,
                 attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · Protomaps',
             }).addTo(mapa);
@@ -322,17 +426,17 @@ function tablero(config) {
         textoConexion() {
             if (this.conexion === 'conectado') {
                 return this.nodoConectado === config.nodo
-                    ? `Conectado a ${this.nodoConectado}`
-                    : `Conectado a ${this.nodoConectado} · ${config.nodo} no responde`;
+                    ? t('Conectado a :nodo', { nodo: this.nodoConectado })
+                    : t('Conectado a :nodo · :caido no responde', { nodo: this.nodoConectado, caido: config.nodo });
             }
             if (this.conexion === 'reintentando') {
-                return `Sin respuesta de ${this.nodoConectado} (${this.fallos}/${FALLOS_ANTES_DE_CAMBIAR})`;
+                return t('Sin respuesta de :nodo (:fallos/:maximo)', { nodo: this.nodoConectado, fallos: this.fallos, maximo: FALLOS_ANTES_DE_CAMBIAR });
             }
             if (this.conexion === 'caido') {
-                return 'Sin conexión con B ni C';
+                return t('Sin conexión con B ni C');
             }
 
-            return 'Conectando…';
+            return t('Conectando…');
         },
 
         claseConexion() {
@@ -408,7 +512,7 @@ function tablero(config) {
                     fillOpacity: OPACIDAD_MINIMA + (1 - OPACIDAD_MINIMA) * Math.min(1, incidente.confianza ?? 0),
                 });
                 marcador.bindTooltip(
-                    `${incidente.prioridad} · ${incidente.tipo_nombre} · ${incidente.reportes_n} rep. · ${this.porcentaje(incidente.confianza)} ${incidente.corroborado ? 'corroborado' : 'dudoso'}`,
+                    `${incidente.prioridad} · ${td(incidente.tipo_nombre)} · ${t(':n rep.', { n: incidente.reportes_n })} · ${this.porcentaje(incidente.confianza)} ${incidente.corroborado ? t('corroborado') : t('dudoso')}`,
                     { direction: 'top', offset: [0, -6] },
                 );
                 marcador.on('click', () => this.abrir(incidente.uuid));
@@ -430,16 +534,22 @@ function tablero(config) {
                 if (!respuesta.ok) {
                     throw new Error(`HTTP ${respuesta.status}`);
                 }
+                const estabaAbierto = this.detalle !== null;
                 this.detalle = await respuesta.json();
+                // El panel de detalle aparece y le quita ancho al mapa: Leaflet debe medirse de nuevo.
+                if (!estabaAbierto) {
+                    await this.$nextTick();
+                    mapa?.invalidateSize({ pan: false });
+                }
                 if (this.detalle.lat !== null && mapa) {
                     mapa.panTo([this.detalle.lat, this.detalle.lon]);
                 }
                 this.$refs.detalle?.scrollTo({ top: 0 });
-                if (window.matchMedia('(max-width: 1279px)').matches) {
+                if (window.matchMedia('(max-width: 1023px)').matches) {
                     this.$refs.detalle?.scrollIntoView({ block: 'start' });
                 }
             } catch (error) {
-                this.detalle = { error: 'No se pudo cargar el detalle. Se reintentará al elegirlo de nuevo.' };
+                this.detalle = { error: t('No se pudo cargar el detalle. Se reintentará al elegirlo de nuevo.') };
             }
         },
 
@@ -453,6 +563,7 @@ function tablero(config) {
             this.detalle = null;
             this.contactando = null;
             this.pintarMarcadores();
+            this.ajustarMapa();
         },
 
         clasePrioridad(prioridad) {
@@ -464,7 +575,7 @@ function tablero(config) {
         },
 
         hora(iso) {
-            return iso ? new Date(iso).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '–';
+            return iso ? new Date(iso).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '–';
         },
 
         haceCuanto(iso) {
@@ -473,17 +584,18 @@ function tablero(config) {
             }
             const minutos = Math.floor((this.ahora - new Date(iso).getTime()) / 60000);
             if (minutos < 1) {
-                return 'ahora';
+                return t('ahora');
             }
             if (minutos < 60) {
-                return `hace ${minutos} min`;
+                return t('hace :m min', { m: minutos });
             }
 
-            return `hace ${Math.floor(minutos / 60)} h ${minutos % 60} min`;
+            return t('hace :h h :m min', { h: Math.floor(minutos / 60), m: minutos % 60 });
         },
     };
 }
 
 window.tablero = tablero;
 window.Alpine = Alpine;
+instalarIdioma(Alpine, { titulo: 'Coordinación · SARD (:nodo)', paramsTitulo: { nodo: document.title.match(/\((\w+)\)/)?.[1] ?? '' } });
 Alpine.start();

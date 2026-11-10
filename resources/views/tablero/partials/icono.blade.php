@@ -36,6 +36,12 @@
         @case('cadena')
             <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
             @break
+        @case('plegar')
+            <rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16M15.5 9.5 13 12l2.5 2.5" />
+            @break
+        @case('desplegar')
+            <rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16M13 9.5l2.5 2.5-2.5 2.5" />
+            @break
         @case('capas')
             <path d="m12 3 9 5-9 5-9-5z" /><path d="m3 13 9 5 9-5" />
             @break
