@@ -175,4 +175,30 @@ final class TableroCoordinacionTest extends TestCase
         $this->get('/tablero')->assertNotFound();
         $this->getJson('/api/tablero/estado')->assertNotFound();
     }
+
+    public function test_el_mapa_trae_todos_los_incidentes_con_ubicacion_aunque_la_cola_venga_recortada(): void
+    {
+        // 12 P1 separados ~1,1 km entre sí (no se agrupan): la cola corta trae 10, el mapa los 12.
+        foreach (range(0, 11) as $i) {
+            $this->entregar($this->payload(
+                banderas: ['atrapada'],
+                lat: 4.95 + $i * 0.01,
+                lon: -75.61,
+                deviceId: 1000 + $i,
+            ))->assertOk();
+        }
+        $this->entregar($this->payload(banderas: ['atrapada'], lat: null, lon: null, deviceId: 2000))->assertOk();
+
+        $estado = $this->getJson('/api/tablero/estado')->assertOk();
+
+        $estado->assertJsonPath('cola_total', 12)
+            ->assertJsonCount(10, 'cola')
+            ->assertJsonCount(12, 'mapa')
+            ->assertJsonCount(1, 'sin_ubicacion');
+        $this->assertEqualsCanonicalizing(
+            ['uuid', 'lat', 'lon', 'prioridad', 'tipo_nombre', 'reportes_n', 'confianza', 'corroborado', 'masivo', 'radio_m'],
+            array_keys($estado->json('mapa.0')),
+        );
+        $this->assertNotContains(null, array_column($estado->json('mapa'), 'lat'), 'los sin ubicación no van al mapa');
+    }
 }

@@ -65,6 +65,7 @@ final class DecisionController
             trim($datos['operador']),
         );
 
-        return response()->json($resultado, 201);
+        // Repetir la misma decisión es idempotente: 200 con la existente; una nueva es 201.
+        return response()->json($resultado, $resultado['repetida'] ? 200 : 201);
     }
 }

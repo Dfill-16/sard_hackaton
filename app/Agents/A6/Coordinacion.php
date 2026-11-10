@@ -255,6 +255,19 @@ final class Coordinacion
     public function decidir(object $recomendacion, string $accion, ?string $motivo, string $operador): array
     {
         $previas = DB::table('decisiones')->where('recomendacion_uuid', $recomendacion->uuid)->get();
+
+        // Volver a pulsar el mismo botón no es otra decisión: si este operador, en este nodo, ya tomó
+        // esta misma acción, se devuelve la existente sin escribir nada (ni conflicto ni otra alerta).
+        $repetida = $previas->first(fn (object $previa): bool => self::esLaMismaDecision($previa, $accion, $operador, $this->log->nodo()));
+        if ($repetida !== null) {
+            return [
+                'decision_uuid' => $repetida->uuid,
+                'alerta_uuid' => null,
+                'en_conflicto' => $previas->count() > 1,
+                'repetida' => true,
+            ];
+        }
+
         $decisionUuid = Uuid7::generar();
 
         $this->log->append('DecisionHumana', [
@@ -281,7 +294,15 @@ final class Coordinacion
             $this->reproponerPorUnidadAsignada($recomendacion->unidad_id, $recomendacion->incidente_uuid);
         }
 
-        return ['decision_uuid' => $decisionUuid, 'alerta_uuid' => $alertaUuid, 'en_conflicto' => $previas->isNotEmpty()];
+        return ['decision_uuid' => $decisionUuid, 'alerta_uuid' => $alertaUuid, 'en_conflicto' => $previas->isNotEmpty(), 'repetida' => false];
+    }
+
+    /** Misma recomendación (ya filtrada), misma acción, mismo operador (sin distinguir mayúsculas) y mismo nodo. */
+    public static function esLaMismaDecision(object $previa, string $accion, string $operador, string $nodo): bool
+    {
+        return $previa->accion === $accion
+            && $previa->nodo === $nodo
+            && mb_strtolower(trim($previa->operador)) === mb_strtolower(trim($operador));
     }
 
     /** Texto corto de la alerta (≤ 120 caracteres) con lo que la unidad necesita saber. */

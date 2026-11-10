@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Agents\A6\Coordinacion;
 use App\Node\A\GeneradorSintetico;
+use App\Sard\Log\EventLog;
 use App\Sard\Nodo\EstadoNodo;
+use App\Sard\Support\Uuid7;
 use Database\Seeders\SemillaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -204,6 +206,53 @@ final class CoordinacionA6Test extends TestCase
 
         $detalle = $this->getJson("/api/incidentes/{$recomendacion->incidente_uuid}")->assertOk();
         $detalle->assertJsonCount(3, 'decisiones')->assertJsonPath('estado', 'en_conflicto')->assertJsonPath('recomendacion.decidida', true);
+    }
+
+    public function test_pulsar_aprobar_varias_veces_no_crea_decisiones_ni_conflicto(): void
+    {
+        $payload = $this->payload(banderas: ['incendio'], tipo: 2);
+        $this->entregar($payload)->assertOk();
+        $recomendacion = $this->recomendacionDe($payload);
+
+        $primera = $this->decidir(['recomendacion_uuid' => $recomendacion->uuid, 'accion' => 'aprobar'])
+            ->assertCreated()->assertJsonPath('repetida', false);
+        foreach (['Mariana', ' mariana '] as $mismoOperador) {
+            $this->decidir(['recomendacion_uuid' => $recomendacion->uuid, 'accion' => 'aprobar', 'operador' => $mismoOperador])
+                ->assertOk()
+                ->assertJsonPath('repetida', true)
+                ->assertJsonPath('decision_uuid', $primera->json('decision_uuid'))
+                ->assertJsonPath('en_conflicto', false);
+        }
+
+        $this->assertSame(1, DB::table('eventos')->where('tipo', 'DecisionHumana')->count(), 'el clic repetido no escribe en el log');
+        $this->assertSame(1, DB::table('eventos')->where('tipo', 'AlertaCampoEnviada')->count());
+        $this->assertSame('en_atencion', DB::table('incidentes')->where('uuid', $recomendacion->incidente_uuid)->value('estado'));
+        $this->getJson("/api/incidentes/{$recomendacion->incidente_uuid}")->assertOk()->assertJsonCount(1, 'decisiones');
+    }
+
+    public function test_los_clics_repetidos_que_ya_estaban_en_el_log_no_cuentan_al_reconstruir(): void
+    {
+        $payload = $this->payload(banderas: ['incendio'], tipo: 2);
+        $this->entregar($payload)->assertOk();
+        $recomendacion = $this->recomendacionDe($payload);
+
+        // Como quedaba antes de la regla: tres DecisionHumana idénticas del mismo operador en el log.
+        $this->decidir(['recomendacion_uuid' => $recomendacion->uuid, 'accion' => 'aprobar'])->assertCreated();
+        foreach ([1, 2] as $repeticion) {
+            app(EventLog::class)->append('DecisionHumana', [
+                'decision_uuid' => Uuid7::generar(),
+                'recomendacion_uuid' => $recomendacion->uuid,
+                'incidente_uuid' => $recomendacion->incidente_uuid,
+                'accion' => 'aprobar',
+                'motivo' => null,
+                'operador' => 'Mariana',
+            ], $recomendacion->incidente_uuid);
+        }
+        $this->artisan('sard:reconstruir')->assertSuccessful();
+
+        $this->assertSame(3, DB::table('eventos')->where('tipo', 'DecisionHumana')->count(), 'el log no se toca');
+        $this->assertSame(1, DB::table('decisiones')->where('recomendacion_uuid', $recomendacion->uuid)->count());
+        $this->assertSame('en_atencion', DB::table('incidentes')->where('uuid', $recomendacion->incidente_uuid)->value('estado'));
     }
 
     public function test_seguidor_no_acepta_decisiones(): void

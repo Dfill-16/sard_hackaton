@@ -8,6 +8,7 @@ use App\Sard\Reglas\Brechas;
 use App\Sard\Support\Tiempo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 /**
  * GET /api/tablero/estado?todos=0|1 · estado de la cola para el tablero (polling).
@@ -18,6 +19,11 @@ use Illuminate\Http\Request;
 final class EstadoController
 {
     public const TOPE_COLA = 10;
+
+    /** Lo que necesita un marcador del mapa (tooltip, color, opacidad, halo y anillos). */
+    public const CAMPOS_MAPA = [
+        'uuid', 'lat', 'lon', 'prioridad', 'tipo_nombre', 'reportes_n', 'confianza', 'corroborado', 'masivo', 'radio_m',
+    ];
 
     public function __construct(
         private EstadoNodo $estado,
@@ -59,6 +65,10 @@ final class EstadoController
             'cola' => $todos ? $urgentes : $urgentes->take(self::TOPE_COLA)->values(),
             'baja_prioridad' => $conUbicacion->whereIn('prioridad', ['P3', 'P4'])->values(),
             'sin_ubicacion' => $incidentes->where('sin_ubicacion', true)->values(),
+            // El mapa muestra TODOS los incidentes con ubicación, aunque la lista corta solo traiga el top 10.
+            'mapa' => $conUbicacion
+                ->map(fn (array $incidente): array => Arr::only($incidente, self::CAMPOS_MAPA))
+                ->values(),
             // T-017: capas de demostración y brechas de cobertura.
             'recursos' => $this->brechas->recursos(),
             'unidades' => $this->brechas->unidades(),

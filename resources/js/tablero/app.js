@@ -303,6 +303,21 @@ function tablero(config) {
             }
         },
 
+        /**
+         * ¿Este operador ya tomó esta acción sobre la recomendación, desde este nodo? Repetirla no
+         * cambia nada (el servidor es idempotente), así que el botón se desactiva y lo dice.
+         */
+        yaDecidi(accion) {
+            const operador = this.operador.trim().toLowerCase();
+
+            const recomendacion = this.detalle?.recomendacion?.uuid;
+
+            return operador !== '' && (this.detalle?.decisiones ?? []).some((d) => d.accion === accion
+                && d.recomendacion_uuid === recomendacion
+                && d.nodo === this.nodoConectado
+                && d.operador.trim().toLowerCase() === operador);
+        },
+
         abrirDescarte() {
             this.errorDecision = null;
             this.motivoDescarte = '';
@@ -470,7 +485,8 @@ function tablero(config) {
             }
 
             capaMarcadores.clearLayers();
-            const conUbicacion = [...this.estado.cola, ...this.estado.baja_prioridad].filter((i) => i.lat !== null);
+            // `mapa` trae todos los incidentes con ubicación; la lista «Atender primero» puede venir recortada al top 10.
+            const conUbicacion = (this.estado.mapa ?? [...this.estado.cola, ...this.estado.baja_prioridad]).filter((i) => i.lat !== null);
             const borde = variable('--sard-surface');
 
             for (const incidente of conUbicacion) {

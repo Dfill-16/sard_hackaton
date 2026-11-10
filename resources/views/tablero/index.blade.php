@@ -355,12 +355,13 @@
                                 </ul>
 
                                 <div class="mt-1 flex flex-wrap items-center gap-2">
-                                    <button type="button" @click="decidir('aprobar')" :disabled="enviandoDecision"
+                                    <button type="button" @click="decidir('aprobar')" :disabled="enviandoDecision || yaDecidi('aprobar')"
                                         :class="detalle.recomendacion.decidida ? 'border border-border hover:border-border-hover' : 'bg-accent text-white hover:bg-accent-hover'"
                                         class="inline-flex min-h-9 items-center rounded-sm px-4 text-sm font-medium disabled:opacity-50"
-                                        x-text="detalle.recomendacion.unidad_id ? $t('Aprobar y alertar') : $t('Aprobar')"></button>
-                                    <button type="button" @click="abrirDescarte()" :disabled="enviandoDecision"
-                                        class="inline-flex min-h-9 items-center rounded-sm border border-border px-4 text-sm font-medium hover:border-border-hover disabled:opacity-50" x-t>Descartar</button>
+                                        x-text="yaDecidi('aprobar') ? $t('Ya la aprobaste') : (detalle.recomendacion.unidad_id ? $t('Aprobar y alertar') : $t('Aprobar'))"></button>
+                                    <button type="button" @click="abrirDescarte()" :disabled="enviandoDecision || yaDecidi('descartar')"
+                                        class="inline-flex min-h-9 items-center rounded-sm border border-border px-4 text-sm font-medium hover:border-border-hover disabled:opacity-50"
+                                        x-text="yaDecidi('descartar') ? $t('Ya la descartaste') : $t('Descartar')">Descartar</button>
                                     <span class="text-xs text-muted" x-show="detalle.recomendacion.decidida" x-t>Ya tiene decisión: otra la deja en conflicto.</span>
                                 </div>
                                 <p class="text-xs text-down" role="alert" x-show="errorDecision" x-text="errorDecision"></p>
