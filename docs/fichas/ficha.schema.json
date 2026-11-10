@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sard/ficha-agente.v1",
+  "title": "Ficha de agente SARD",
+  "type": "object",
+  "required": ["id", "nombre", "objetivo", "entradas", "salidas", "usa_llm", "herramientas", "memoria", "limites_autonomia", "manejo_errores", "criterios_terminacion", "archivos", "verificacion"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Identificador estable del agente (A1-A6)",
+      "pattern": "^A[1-6]$"
+    },
+    "nombre": {
+      "type": "string",
+      "description": "Nombre legible del agente"
+    },
+    "rol": {
+      "type": "string",
+      "description": "Función dentro del sistema"
+    },
+    "plano": {
+      "type": "string",
+      "description": "Proceso donde se ejecuta"
+    },
+    "usa_llm": {
+      "type": "boolean",
+      "description": "Si interviene o no un modelo de lenguaje"
+    },
+    "llm": {
+      "type": ["object", "null"],
+      "description": "Configuración del LLM si aplica",
+      "properties": {
+        "proveedores": { "type": "array", "items": { "type": "string" } },
+        "limites_cuota": { "type": "string" },
+        "timeout_s": { "type": "integer" }
+      }
+    },
+    "objetivo": {
+      "type": "string",
+      "description": "Qué resuelve el agente"
+    },
+    "entradas": {
+      "type": "array",
+      "description": "Datos que consume",
+      "items": {
+        "type": "object",
+        "required": ["campo", "tipo", "descripcion"],
+        "properties": {
+          "campo": { "type": "string" },
+          "tipo": { "type": "string" },
+          "descripcion": { "type": "string" },
+          "obligatorio": { "type": "boolean" }
+        }
+      }
+    },
+    "salidas": {
+      "type": "array",
+      "description": "Eventos que escribe en el cuaderno",
+      "items": {
+        "type": "object",
+        "required": ["evento", "ref", "payload"],
+        "properties": {
+          "evento": { "type": "string" },
+          "ref": { "type": "string" },
+          "payload": { "type": "array", "items": { "type": "string" } },
+          "condicional": { "type": "string" },
+          "nota": { "type": "string" }
+        }
+      }
+    },
+    "herramientas": {
+      "type": "array",
+      "description": "Recursos técnicos que utiliza",
+      "items": { "type": "string" }
+    },
+    "memoria": {
+      "type": "string",
+      "description": "Qué datos persiste y cómo"
+    },
+    "limites_autonomia": {
+      "type": "array",
+      "description": "Límites explícitos de autonomía",
+      "items": { "type": "string" }
+    },
+    "manejo_errores": {
+      "type": "array",
+      "description": "Estrategia ante fallos o condiciones insuficientes",
+      "items": { "type": "string" }
+    },
+    "criterios_terminacion": {
+      "type": "array",
+      "description": "Condiciones bajo las cuales el agente concluye su tarea",
+      "items": { "type": "string" }
+    },
+    "archivos": {
+      "type": "array",
+      "description": "Archivos fuente que implementan el agente",
+      "items": { "type": "string" }
+    },
+    "verificacion": {
+      "type": "string",
+      "description": "Cómo se comprobó el comportamiento"
+    },
+    "pruebas": {
+      "type": "array",
+      "description": "Lista de AC asociados",
+      "items": { "type": "string" },
+      "pattern": "^AC-\\d{3}[ab]$"
+    }
+  },
+  "additionalProperties": false
+}

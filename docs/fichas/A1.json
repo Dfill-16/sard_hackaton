@@ -1,0 +1,65 @@
+{
+  "id": "A1",
+  "nombre": "Recepción",
+  "rol": "Normalización del reporte decodificado",
+  "plano": "Líder (nodo B o C)",
+  "usa_llm": false,
+  "objetivo": "Convertir el payload binario decodificado en un registro canónico, completando los campos que faltan y marcando explícitamente los que no se conocen, sin inventar ningún dato.",
+  "entradas": [
+    {
+      "campo": "reporte",
+      "tipo": "array<string, mixed>",
+      "descripcion": "Resultado de PayloadReporte::decode()",
+      "obligatorio": true
+    }
+  ],
+  "salidas": [
+    {
+      "evento": "ReporteNormalizado",
+      "ref": "reporte_uuid",
+      "payload": [
+        "reporte_uuid",
+        "device_id",
+        "tipo",
+        "banderas",
+        "personas",
+        "texto",
+        "lat",
+        "lon",
+        "sin_ubicacion",
+        "creado_en",
+        "truncado",
+        "campos_desconocidos"
+      ]
+    }
+  ],
+  "herramientas": [
+    "PayloadReporte::decode() - decodificador binario v1",
+    "mb_scrub() - saneamiento UTF-8",
+    "UUIDv7 - generación de identificador único",
+    "EventLog::append() - escritura en el cuaderno"
+  ],
+  "memoria": "Solo escribe en el evento ReporteNormalizado. No mantiene estado local; usa UUIDs como referencias.",
+  "limites_autonomia": [
+    "Nunca inventa datos: lat/lon null si no hay GPS, personas null si es 0",
+    "Tipo 0-7: fuera de rango se normaliza a 0 pero se anota en campos_desconocidos",
+    "UTF-8 inválido se sanea, no se descarta el texto",
+    "140 bytes máximo de texto: si excede se marca truncado pero se conserva"
+  ],
+  "manejo_errores": [
+    "PayloadInvalidoException: rechaza payload con CRC inválido, versión != 1, o longitud inconsistente",
+    "TypeError: falla si el tipo de entrada no es array",
+    "Los errores se propagan al controlador y se loggean, el reporte se descarta sin ACK"
+  ],
+  "criterios_terminacion": [
+    "Evento ReporteNormalizado escrito con éxito en el EventLog",
+    "UUID de reporte calculado y validado",
+    "Respuesta 200 al PWA (ACK binario 0x41 + 16 bytes UUID)"
+  ],
+  "archivos": [
+    "app/Agents/A1/Recepcion.php",
+    "app/Protocol/PayloadReporte.php"
+  ],
+  "verificacion": "Código verificado en app/Agents/A1/Recepcion.php:29-71. Comportamiento contrastado contra 103 incidentes con sin_ubicacion = 1 en la base en vivo, que conservan lat y lon en null.",
+  "pruebas": ["AC-001a", "AC-001b", "AC-011a"]
+}

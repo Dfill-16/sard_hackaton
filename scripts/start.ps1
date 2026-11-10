@@ -79,7 +79,7 @@ foreach ($nodo in $catalogo | Where-Object { $Nodos -contains $_.Rol }) {
     $env:NODE_ROLE = $nodo.Rol
     $env:DB_CONNECTION = 'sqlite'
     $env:DB_DATABASE = $base
-    $env:APP_URL = "http://127.0.0.1:$($nodo.Puerto)"
+    $env:APP_URL = "http://0.0.0.0:$($nodo.Puerto)"
     $env:QUEUE_CONNECTION = 'database'
 
     & $php (Join-Path $raiz 'artisan') migrate --force --no-interaction | Out-Null
@@ -90,7 +90,7 @@ foreach ($nodo in $catalogo | Where-Object { $Nodos -contains $_.Rol }) {
 
     $etiqueta = $nodo.Rol.ToLower()
     $pids = @()
-    $servidor = Start-Process -FilePath $php -ArgumentList @('-S', "127.0.0.1:$($nodo.Puerto)", $router) `
+    $servidor = Start-Process -FilePath $php -ArgumentList @('-S', "0.0.0.0:$($nodo.Puerto)", $router) `
         -WorkingDirectory (Join-Path $raiz 'public') -WindowStyle Hidden -PassThru `
         -RedirectStandardOutput (Join-Path $logs "sard-$etiqueta-http.log") -RedirectStandardError (Join-Path $logs "sard-$etiqueta-http.err.log")
     $pids += $servidor.Id
@@ -104,11 +104,11 @@ foreach ($nodo in $catalogo | Where-Object { $Nodos -contains $_.Rol }) {
     }
 
     $pids | Set-Content -Path $archivoPids
-    Write-Host ("{0,-6} http://127.0.0.1:{1}  ({2})" -f $nodo.Rol, $nodo.Puerto, $nodo.Base)
+    Write-Host ("{0,-6} http://0.0.0.0:{1}  ({2})" -f $nodo.Rol, $nodo.Puerto, $nodo.Base)
 }
 
 Remove-Item Env:NODE_ROLE, Env:DB_DATABASE, Env:APP_URL, Env:DB_CONNECTION, Env:QUEUE_CONNECTION -ErrorAction SilentlyContinue
 
 Write-Host ''
-Write-Host 'Tablero: http://127.0.0.1:8002/tablero (o :8003 en C)  -  PWA: http://127.0.0.1:8001/pwa  -  Campo: http://127.0.0.1:8004/campo'
+Write-Host 'Tablero: http://0.0.0.0:8002/tablero (o :8003 en C)  -  PWA: http://0.0.0.0:8001/pwa  -  Campo: http://0.0.0.0:8004/campo'
 Write-Host 'Matar B en vivo: ./scripts/matar-nodo.ps1 B  -  Detener todo: ./scripts/stop.ps1'

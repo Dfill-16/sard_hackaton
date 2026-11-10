@@ -1,0 +1,200 @@
+/*
+ * layout.css — capas, HUD, controles, escenas, paneles y puntos de corte.
+ * Z-index: 3D 0 · anclas 5 · contenido 10 · HUD/controles 40 · avisos 45 · diálogos (top layer) · loader 60.
+ */
+
+#escena-3d {
+    position: fixed; inset: 0; z-index: 0;
+    /* Fondo neutro (mismo patrón que .mapa-neutro del tablero). El canvas 3D lo cubre en H2. */
+    background:
+        radial-gradient(ellipse at 30% 40%, var(--sard-surface) 0%, var(--sard-background) 60%),
+        var(--sard-background);
+}
+#escena-3d::after {
+    content: ''; position: absolute; inset: 0;
+    background:
+        repeating-linear-gradient(0deg, var(--sard-map-grid) 0 1px, transparent 1px 40px),
+        repeating-linear-gradient(90deg, var(--sard-map-grid) 0 1px, transparent 1px 40px);
+    pointer-events: none;
+}
+#escena-3d canvas { display: block; width: 100%; height: 100%; }
+#escena-3d.con-3d::after { display: none; }
+
+.anclas { position: fixed; inset: 0; z-index: 5; pointer-events: none; }
+.anclas > * { pointer-events: auto; }
+
+/* S05: el 3D queda de fondo al 25 % para no competir con el diagrama SVG. */
+#escena-3d { transition: opacity 400ms ease; }
+#escena-3d[data-atenuado="si"] { opacity: 0.25; }
+
+/* El contenido deja pasar el puntero en sus zonas vacías: así el canvas recibe el arrastre
+   de cámara (OrbitControls) y las anclas reciben hover/clic. */
+#contenido { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
+#contenido .escena > * { pointer-events: auto; }
+
+/* Botones anclados a objetos 3D */
+.ancla {
+    position: absolute; left: 0; top: 0;
+    min-width: 44px; min-height: 44px;
+    border-radius: 999px; border: 1px solid transparent; background: transparent;
+    color: var(--sard-foreground); cursor: pointer;
+    will-change: transform;
+}
+.ancla:hover, .ancla:focus-visible { border-color: var(--sard-border-hover); background: color-mix(in srgb, var(--sard-surface) 60%, transparent); }
+
+/* ---------- Escenas ---------- */
+.escena {
+    position: absolute; inset: 0;
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-content: center;
+    gap: var(--space-6);
+    padding:
+        max(72px, calc(env(safe-area-inset-top) + 64px))
+        max(6vw, env(safe-area-inset-right))
+        max(96px, calc(env(safe-area-inset-bottom) + 88px))
+        max(6vw, env(safe-area-inset-left));
+    overflow: hidden;
+}
+.escena[hidden] { display: none; }
+
+.panel {
+    background: color-mix(in srgb, var(--sard-surface) 88%, transparent);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--sard-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-borde);
+}
+@supports not ((backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px))) {
+    .panel { background: var(--sard-surface); }
+}
+
+/* Ninguna tarjeta supera el alto útil (entre el HUD y los controles): si no cabe, se desplaza
+   por dentro. --alto-util lo comparten todas las escenas. */
+:root { --alto-util: calc(100dvh - 72px - 96px); }
+.escena > .panel {
+    max-height: var(--alto-util);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--sard-border-hover) transparent;
+}
+
+.panel--izquierda { grid-column: 1 / span 5; }
+.panel--derecha { grid-column: 8 / span 5; }
+.panel--centro { grid-column: 3 / span 8; }
+.panel--ancho { grid-column: 1 / -1; }
+.pila { display: flex; flex-direction: column; gap: var(--space-4); }
+.sombra-texto { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); }
+
+/* ---------- HUD ---------- */
+.hud {
+    position: fixed; inset: 0 0 auto 0; z-index: 40;
+    padding-top: env(safe-area-inset-top);
+    pointer-events: none;
+}
+.hud > * { pointer-events: auto; }
+.progreso { height: 2px; background: var(--sard-border); }
+.progreso__relleno {
+    height: 100%; background: var(--sard-accent);
+    transform-origin: left; transform: scaleX(0);
+}
+.hud__barra {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+    padding: var(--space-3) max(var(--space-6), env(safe-area-inset-right)) var(--space-3) max(var(--space-6), env(safe-area-inset-left));
+}
+.hud__marca { display: inline-flex; align-items: center; gap: var(--space-2); font-weight: 700; letter-spacing: -0.01em; }
+.hud__miga {
+    flex: 1; min-width: 0; text-align: center;
+    font-size: var(--size-sm); color: var(--sard-muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hud__acciones { display: flex; align-items: center; gap: var(--space-2); }
+
+/* S00: HUD mínimo (solo progreso y marca a media opacidad) */
+.hud[data-modo="minimo"] .hud__miga,
+.hud[data-modo="minimo"] .hud__acciones { visibility: hidden; }
+.hud[data-modo="minimo"] .hud__marca { opacity: 0.5; }
+
+/* ---------- Controles ---------- */
+.controles {
+    position: fixed; z-index: 40;
+    right: max(var(--space-6), env(safe-area-inset-right));
+    bottom: max(var(--space-6), env(safe-area-inset-bottom));
+    display: flex; gap: var(--space-2);
+    transition: opacity var(--dur-feedback) ease;
+}
+body.controles-ocultos .controles,
+body.controles-ocultos .hud__acciones .btn { opacity: 0; pointer-events: none; }
+body.controles-ocultos .controles:focus-within { opacity: 1; pointer-events: auto; }
+
+/* ---------- Avisos ---------- */
+.avisos {
+    position: fixed; z-index: 45; left: 50%; bottom: max(var(--space-6), env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; gap: var(--space-2);
+    width: min(560px, calc(100vw - 32px));
+    pointer-events: none;
+}
+
+/* ---------- Loader ---------- */
+.loader {
+    position: fixed; inset: 0; z-index: 60;
+    display: grid; place-content: center; justify-items: center; gap: var(--space-6);
+    background: var(--sard-background);
+    transition: opacity var(--dur-salida) ease;
+}
+.loader.listo { opacity: 0; pointer-events: none; }
+.loader__barra { width: 160px; height: 2px; background: var(--sard-border); overflow: hidden; }
+.loader__barra > div { height: 100%; width: 0; background: var(--sard-accent); transition: width 200ms linear; }
+
+.noscript {
+    position: fixed; inset: 0; z-index: 80; display: grid; place-content: center;
+    padding: var(--space-6); background: var(--sard-background); text-align: center;
+}
+
+/* ---------- Modo texto (sin WebGL o calidad mínima) ---------- */
+body.modo-texto #contenido { overflow-y: auto; overscroll-behavior: contain; pointer-events: auto; }
+body.modo-texto .escena {
+    position: relative; inset: auto; min-height: 100%;
+    display: block; max-width: 68ch; margin: 0 auto;
+}
+body.modo-texto .escena > * + * { margin-top: var(--space-6); }
+
+/* ---------- Puntos de corte (INTERACTION_SPEC §6.1) ---------- */
+@media (max-width: 1279px) {
+    .escena { padding-left: max(4vw, env(safe-area-inset-left)); padding-right: max(4vw, env(safe-area-inset-right)); }
+    .panel--izquierda { grid-column: 1 / span 6; }
+    .panel--derecha { grid-column: 7 / span 6; }
+    .panel--centro { grid-column: 2 / span 10; }
+}
+
+@media (max-width: 1023px) {
+    /* Tablet: el contenido pasa a franja inferior desplazable; el 3D queda arriba. */
+    .escena {
+        display: flex; flex-direction: column; justify-content: flex-end;
+        padding-top: 50vh;
+    }
+    .escena > .panel, .escena > .pila {
+        max-height: min(45vh, var(--alto-util)); overflow-y: auto; overscroll-behavior: contain;
+    }
+}
+
+@media (max-width: 767px) {
+    body { font-size: 17px; }
+    #escena-3d, #escena-3d[data-atenuado="si"] { opacity: 0.3; }
+    .anclas { display: none; }
+    #contenido { overflow-y: auto; overscroll-behavior: contain; pointer-events: auto; }
+    .escena {
+        position: relative; inset: auto; min-height: 100%;
+        display: flex; flex-direction: column; justify-content: flex-start;
+        gap: var(--space-4);
+        padding: calc(env(safe-area-inset-top) + 64px) var(--space-4) calc(env(safe-area-inset-bottom) + 96px);
+    }
+    .escena > .panel, .escena > .pila { max-height: none; overflow: visible; }
+    .hud__miga, #btn-ayuda { display: none; }
+    .controles { left: var(--space-4); right: var(--space-4); }
+    .controles .btn { flex: 1; }
+}

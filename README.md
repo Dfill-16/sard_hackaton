@@ -229,6 +229,18 @@ Opciones: cantidad de reportes, `--masivo`, `--rumor`, `--demo`, `--dispositivos
 | 4 | 💥 **Cae el líder** | `./scripts/matar-nodo.ps1 B` | El tablero pasa solo a C, que asume en unos 10 s |
 | 5 | 🔄 **Vuelve** | `./scripts/start.ps1 -Nodos B` | B se une sin perder eventos |
 
+### 📋 Documentación y entregables
+
+| Entregable | Estado | Archivo |
+|---|---|---|
+| E1 | ✅ | Prototipo funcional |
+| E2 | ✅ | Código fuente en este repo |
+| E3 | ✅ | `docs/e3/index.html` (arquitectura) |
+| E4 | ✅ | `docs/fichas/` (6 fichas JSON + schema) |
+| E5 | ✅ | `docs/e5/entregable-5-protocolo.md` |
+| E6 | ✅ | `docs/resultados/resultados.md` (métricas) |
+| E7 | ⚠️ | `scripts/demo.ps1` (falta pitch formal)
+
 <details>
 <summary><b>🔗 Verificar la integridad del log</b></summary>
 

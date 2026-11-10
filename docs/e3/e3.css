@@ -1,0 +1,468 @@
+/*
+ * E3 · Documento de arquitectura SARD
+ * Tailwind v4 compilado por docs/e3/build.mjs e incrustado en index.html.
+ * Dos colores de marca (azul pizarra y azul acero) más neutros; el ámbar solo marca avisos.
+ */
+@import "tailwindcss" source(none);
+@source "./index.src.html";
+
+@theme {
+    --font-sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+
+    --color-brand-950: #0b1b33;
+    --color-brand-900: #0f2544;
+    --color-brand-800: #16315a;
+    --color-brand-700: #1b3a63;
+    --color-brand-600: #255487;
+    --color-brand-500: #3a6ea5;
+    --color-brand-400: #4a7fb5;
+    --color-brand-200: #c3d5e8;
+    --color-brand-100: #dce7f1;
+    --color-brand-50: #f2f6fa;
+
+    --color-ink-900: #111c2b;
+    --color-ink-700: #33465c;
+    --color-ink-500: #5a6b80;
+    --color-line: #d6dee7;
+
+    --color-warn-50: #fdf6e8;
+    --color-warn-500: #c99a2e;
+    --color-warn-900: #6b4e10;
+}
+
+@page {
+    size: A4;
+    margin: 18mm 16mm;
+}
+
+@layer base {
+    html {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    body {
+        @apply bg-white font-sans text-[9.6pt] leading-[1.52] text-ink-900 tabular-nums;
+    }
+
+    h2 {
+        @apply mb-[4mm] flex items-baseline gap-[3mm] border-b-[1.6pt] border-brand-600 pb-[2.4mm] text-[15pt] font-bold tracking-tight text-brand-900;
+        break-after: avoid;
+        text-wrap: balance;
+    }
+
+    h3 {
+        @apply mt-[6mm] mb-[2.6mm] text-[10.6pt] font-bold text-brand-700;
+        break-after: avoid;
+        text-wrap: balance;
+    }
+
+    h4 {
+        @apply mt-[4.5mm] mb-[2mm] text-[9.6pt] font-bold text-ink-700;
+        break-after: avoid;
+    }
+
+    p {
+        @apply mb-[2.8mm] max-w-[168mm];
+    }
+
+    strong {
+        @apply font-bold text-brand-900;
+    }
+
+    ul,
+    ol {
+        @apply my-[1.5mm] mb-[3mm] pl-[5mm];
+    }
+
+    ul {
+        @apply list-disc;
+    }
+
+    ol {
+        @apply list-decimal;
+    }
+
+    li {
+        @apply mb-[1.2mm] marker:text-brand-400;
+    }
+
+    code {
+        @apply rounded-[2.5pt] border-[0.6pt] border-line bg-brand-50 px-[1.1mm] py-[0.3mm] font-mono text-[8.2pt] whitespace-nowrap text-brand-700;
+    }
+}
+
+@layer components {
+    /* ---------- Secciones ---------- */
+    .doc-section {
+        @apply mt-[12mm];
+    }
+
+    .doc-section.first {
+        @apply mt-0;
+        break-before: page;
+    }
+
+    .sec-num {
+        @apply font-mono text-[12pt] font-semibold text-brand-500;
+    }
+
+    .path {
+        @apply font-semibold text-ink-500;
+    }
+
+    /* ---------- Figuras ---------- */
+    .fig {
+        @apply my-[5mm] break-inside-avoid rounded-md border border-line bg-white px-[5mm] pt-[5mm] pb-[3.5mm];
+    }
+
+    .fig svg {
+        @apply mx-auto block h-auto w-full;
+    }
+
+    .fig figcaption {
+        @apply mt-[3.5mm] border-t border-line pt-[2.5mm] text-[8.2pt] leading-snug text-ink-500;
+    }
+
+    .fig figcaption b {
+        @apply font-bold text-brand-700;
+    }
+
+    .src {
+        @apply mt-[1.4mm] block font-mono text-[7.4pt] text-ink-500;
+    }
+
+    /* ---------- Tablas ---------- */
+    .tbl-wrap {
+        @apply my-[4mm] mb-[6mm];
+    }
+
+    .tbl-wrap:not(.long) {
+        @apply break-inside-avoid;
+    }
+
+    .tbl-title {
+        @apply mb-[2mm] flex items-baseline gap-[2mm] text-[8.6pt] font-bold text-brand-700;
+        break-after: avoid;
+    }
+
+    .tbl-title .tnum {
+        @apply rounded-[2pt] bg-brand-100 px-[1.8mm] py-[0.3mm] font-mono text-[7.6pt] font-semibold text-brand-900;
+    }
+
+    .tbl-title .tref {
+        @apply ml-auto font-mono text-[7.2pt] font-normal text-ink-500;
+    }
+
+    .tbl-frame {
+        @apply rounded-md border border-line;
+    }
+
+    .tbl {
+        @apply w-full border-separate border-spacing-0 text-[8.6pt] leading-[1.4];
+    }
+
+    .tbl thead {
+        display: table-header-group;
+    }
+
+    .tbl tr {
+        break-inside: avoid;
+    }
+
+    .tbl th {
+        @apply bg-brand-900 px-[3mm] py-[2.1mm] text-left align-bottom text-[7.2pt] font-semibold tracking-[0.07em] text-white uppercase;
+    }
+
+    .tbl th:first-child {
+        @apply rounded-tl-[5px];
+    }
+
+    .tbl th:last-child {
+        @apply rounded-tr-[5px];
+    }
+
+    .tbl th.r,
+    .tbl td.r {
+        @apply text-right;
+    }
+
+    .tbl td {
+        @apply border-b border-line px-[3mm] py-[1.4mm] align-top text-ink-900;
+    }
+
+    .tbl tbody tr:last-child td {
+        @apply border-b-0;
+    }
+
+    .tbl tbody tr:nth-child(even) td {
+        @apply bg-brand-50/70;
+    }
+
+    .tbl tbody tr.grp td {
+        @apply border-y border-brand-200 bg-brand-100 py-[1.2mm] text-[7.2pt] font-bold tracking-[0.09em] text-brand-900 uppercase;
+    }
+
+    .tbl tbody tr.grp:first-child td {
+        @apply border-t-0;
+    }
+
+    .tbl td.k {
+        @apply font-semibold whitespace-nowrap text-brand-900;
+    }
+
+    .tbl td.mono {
+        @apply font-mono text-[8pt] whitespace-nowrap text-brand-700;
+    }
+
+    .tbl td.num {
+        @apply text-right font-semibold whitespace-nowrap;
+    }
+
+    .tbl td.dim {
+        @apply text-[7.9pt] text-ink-500;
+    }
+
+    /* Chips y pills */
+    .cd {
+        @apply inline-block rounded-[2.5pt] border-[0.6pt] border-line bg-brand-50 px-[1.1mm] py-[0.2mm] font-mono text-[8pt] whitespace-nowrap text-brand-700;
+    }
+
+    .pill {
+        @apply inline-block min-w-[11mm] rounded-full px-[2mm] py-[0.3mm] text-center font-mono text-[7.4pt] font-bold tracking-wide;
+    }
+
+    .pill-get {
+        @apply bg-brand-100 text-brand-900;
+    }
+
+    .pill-post {
+        @apply bg-brand-600 text-white;
+    }
+
+    .pill-code {
+        @apply min-w-0 border border-brand-400 bg-white text-brand-700;
+    }
+
+    .tag {
+        @apply inline-block rounded-[2pt] bg-brand-100 px-[1.4mm] py-[0.2mm] text-[7.4pt] font-semibold text-brand-900;
+    }
+
+    /* ---------- Avisos ---------- */
+    .note,
+    .warn {
+        @apply my-[3.5mm] mb-[5mm] max-w-[168mm] break-inside-avoid rounded-r-[3pt] border-l-[2.6pt] px-[4mm] py-[3mm] text-[8.9pt];
+    }
+
+    .note {
+        @apply border-brand-400 bg-brand-50 text-ink-700;
+    }
+
+    .note b {
+        @apply text-brand-700;
+    }
+
+    .warn {
+        @apply border-warn-500 bg-warn-50 text-warn-900;
+    }
+
+    .warn b {
+        color: #4d3809;
+    }
+
+    /* ---------- KPIs ---------- */
+    .kpi {
+        @apply my-[4mm] mb-[6mm] grid grid-cols-3 gap-[4mm];
+    }
+
+    .kpi > div {
+        @apply rounded-b-[3pt] border-t-[2.6pt] border-brand-400 bg-brand-50 px-[4mm] py-[3.4mm];
+    }
+
+    .kpi dt {
+        @apply mb-[1.4mm] text-[7.2pt] font-bold tracking-[0.11em] text-ink-500 uppercase;
+    }
+
+    .kpi dd {
+        @apply text-[15pt] leading-none font-bold text-brand-900;
+    }
+
+    .kpi dd small {
+        @apply mt-[1.6mm] block text-[8pt] leading-snug font-normal tracking-normal text-ink-500;
+    }
+
+    /* ---------- Mapa de bytes (HTML, no SVG) ---------- */
+    .bytemap {
+        @apply grid grid-cols-[repeat(17,minmax(0,1fr))] gap-x-[0.6mm] gap-y-[1.6mm];
+    }
+
+    .bytemap .off {
+        @apply block overflow-visible pb-[0.4mm] font-mono text-[6.8pt] leading-none whitespace-nowrap text-ink-500;
+    }
+
+    .bytemap .cell {
+        @apply flex min-h-[12mm] flex-col items-center justify-center rounded-[3pt] border border-brand-400 px-[0.6mm] text-center leading-tight;
+    }
+
+    .bytemap .cell b {
+        @apply block text-[7.4pt] font-bold text-brand-900;
+    }
+
+    .bytemap .cell i {
+        @apply block text-[6.6pt] font-medium text-ink-700 not-italic;
+    }
+
+    .bytemap .c1 {
+        @apply bg-brand-100;
+    }
+
+    .bytemap .c2 {
+        @apply bg-brand-50;
+    }
+
+    .bytemap .crc {
+        @apply border-brand-700 bg-brand-700;
+    }
+
+    .bytemap .crc b,
+    .bytemap .crc i {
+        @apply text-white;
+    }
+
+    .bytemap .var {
+        @apply border-dashed;
+    }
+
+    /* ---------- SVG: vocabulario de diagrama ---------- */
+    .s-box {
+        @apply fill-white stroke-brand-600 stroke-[1.5];
+    }
+
+    .s-box-dash {
+        @apply fill-white stroke-brand-400 stroke-[1.5];
+        stroke-dasharray: 6 4;
+    }
+
+    .s-box-soft {
+        @apply fill-brand-100 stroke-brand-400 stroke-[1.2];
+    }
+
+    .s-head {
+        @apply fill-brand-600;
+    }
+
+    .s-head-alt {
+        @apply fill-brand-500;
+    }
+
+    .s-foot {
+        @apply fill-brand-50;
+    }
+
+    .steps {
+        @apply my-[2mm] mb-0 grid list-none grid-cols-2 gap-x-[6mm] gap-y-[1.2mm] pl-0;
+        counter-reset: paso;
+    }
+
+    .steps li {
+        @apply relative mb-0 pl-[6mm] text-[8.2pt] leading-snug text-ink-700;
+        counter-increment: paso;
+    }
+
+    .steps li::before {
+        content: counter(paso);
+        @apply absolute top-[0.2mm] left-0 flex h-[4.2mm] w-[4.2mm] items-center justify-center rounded-full border border-brand-600 bg-white text-[7pt] font-bold text-brand-900;
+    }
+
+    .s-ttl {
+        @apply fill-white text-[11px] font-bold tracking-wide;
+    }
+
+    .s-ttl-dark {
+        @apply fill-brand-900 text-[11px] font-bold;
+    }
+
+    .s-txt {
+        @apply fill-ink-700 text-[10px];
+    }
+
+    .s-dim {
+        @apply fill-ink-500 text-[10px];
+    }
+
+    .s-mono {
+        @apply fill-brand-700 font-mono text-[9.5px];
+    }
+
+    .s-val {
+        @apply fill-brand-900 font-mono text-[9.5px] font-bold;
+    }
+
+    .s-lbl {
+        @apply fill-ink-500 text-[9px] font-bold tracking-[0.12em];
+    }
+
+    .s-ln {
+        @apply fill-none stroke-brand-600 stroke-[1.6];
+    }
+
+    .s-ln-dir {
+        @apply fill-none stroke-brand-400 stroke-[1.6];
+    }
+
+    .s-ln-ret {
+        @apply fill-none stroke-brand-400 stroke-[1.4];
+        stroke-dasharray: 5 3;
+    }
+
+    .s-life {
+        @apply stroke-brand-200 stroke-1;
+        stroke-dasharray: 4 4;
+    }
+
+    .s-rule {
+        @apply stroke-line stroke-1;
+    }
+
+    .s-badge {
+        @apply fill-white stroke-brand-600 stroke-[1.4];
+    }
+
+    .s-badge-t {
+        @apply fill-brand-900 text-[10px] font-bold;
+    }
+
+    .s-halo {
+        @apply stroke-white stroke-[3];
+        paint-order: stroke;
+    }
+
+    .s-th {
+        @apply fill-brand-100;
+    }
+
+    .s-tbl {
+        @apply fill-white stroke-brand-400 stroke-[1.2];
+    }
+
+    .s-name {
+        @apply fill-brand-900 font-mono text-[10.5px] font-bold;
+    }
+
+    .s-col {
+        @apply fill-ink-700 font-mono text-[9px];
+    }
+
+    .s-chip {
+        @apply fill-brand-900 text-[10px] font-bold;
+    }
+
+    .s-link {
+        @apply fill-none stroke-brand-400 stroke-[1.4];
+    }
+
+    .foot {
+        @apply mt-[3mm] border-t border-line pt-[2mm] text-center text-[7.6pt] text-ink-500;
+    }
+}

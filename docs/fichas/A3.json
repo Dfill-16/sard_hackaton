@@ -1,0 +1,70 @@
+{
+  "id": "A3",
+  "nombre": "Correlación",
+  "rol": "Agrupación espacio-temporal de reportes en incidentes",
+  "plano": "Líder (nodo B o C)",
+  "usa_llm": false,
+  "objetivo": "Determinar a qué suceso pertenece cada reporte, agrupando por proximidad en el espacio y en el tiempo, y declarando los incidentes que involucran a múltiples dispositivos distintos.",
+  "entradas": [
+    {
+      "campo": "reporteUuid",
+      "tipo": "string",
+      "descripcion": "UUIDv7 del reporte triado",
+      "obligatorio": true
+    }
+  ],
+  "salidas": [
+    {
+      "evento": "IncidenteAgrupado",
+      "ref": "incidente_uuid",
+      "payload": [
+        "incidente_uuid",
+        "reporte_uuid",
+        "nuevo",
+        "tipo",
+        "distancia_m"
+      ]
+    },
+    {
+      "evento": "IncidenteMasivoDeclarado",
+      "ref": "incidente_uuid",
+      "payload": [
+        "incidente_uuid",
+        "dispositivos",
+        "reportes"
+      ],
+      "condicional": "Cuando se alcanza MASIVO_DISPOSITIVOS (5) dispositivos distintos en la ventana temporal; se declara una sola vez"
+    }
+  ],
+  "herramientas": [
+    "Vecindad::vecinos() - cálculo de distancia euclidiana",
+    "DBSCAN de enlace simple - agrupación espacio-temporal",
+    "DBSCAN_EPS_M = 300m - radio de vecindad",
+    "DBSCAN_MIN = 2 - mínimo de vecinos para agrupar",
+    "Venta: 5 dispositivos distintos en ventana temporal"
+  ],
+  "memoria": "Usa el EventLog como fuente de verdad. Lee incidentes_y_reportes de la BD SQLite. Escribe incidente_reporte como tabla intermedia.",
+  "limites_autonomia": [
+    "Nunca fusiona reportes: cada uno conserva su fila original",
+    "Un reporte sin ubicación no se correlaciona espacialmente",
+    "Idempotente: si el reporte ya tiene incidente, devuelve el mismo UUID",
+    "Nuevos reportes de un mismo dispositivo pueden ser marcados como posible rumor"
+  ],
+  "manejo_errores": [
+    "Si el reporte no existe en la tabla reportes, no se agrupa",
+    "Si falla el cálculo de vecindad, se ignora temporalmente",
+    "Los errores de base de datos se propagan y se loggean"
+  ],
+  "criterios_terminacion": [
+    "Reporte asignado a incidente o nuevo incidente creado",
+    "IncidenteMasivoDeclarado emitido si cumple condición de 5 dispositivos",
+    "Evento escrito en el EventLog con hash válido"
+  ],
+  "archivos": [
+    "app/Agents/A3/Correlacion.php",
+    "app/Agents/A3/Vecindad.php",
+    "app/Agents/A3/Dbscan.php"
+  ],
+  "verificacion": "Código verificado en app/Agents/A3/Correlacion.php:11-58. En ejecución real el nodo C registró 1037 eventos IncidenteAgrupado y 20 IncidenteMasivoDeclarado.",
+  "pruebas": ["AC-006a", "AC-013a"]
+}

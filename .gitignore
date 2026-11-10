@@ -37,3 +37,6 @@ Thumbs.db
 
 # PID de los procesos de scripts/start.ps1
 storage/framework/sard-pids*.txt
+
+# Scratchpad local para el router sin caché de la presentación (no se versiona)
+/.scratch/

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "presentacion",
+      "runtimeExecutable": "php",
+      "runtimeArgs": ["-S", "127.0.0.1:8090", "-t", "public/presentacion"],
+      "port": 8090
+    },
+    {
+      "name": "presentacion-sin-cache",
+      "runtimeExecutable": "php",
+      "runtimeArgs": ["-S", "127.0.0.1:8091", "D:/sard_hackaton/.scratch/router-sin-cache.php"],
+      "port": 8091
+    }
+  ]
+}

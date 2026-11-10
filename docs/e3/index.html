@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SARD — Documento de arquitectura</title>
+<style>/*! tailwindcss v4.3.5 | MIT License | https://tailwindcss.com */
+@layer properties{@supports (((-webkit-hyphens:none)) and (not (margin-trim:block))) or ((-moz-orient:inline) and (not (color:rgb(from red r g b)))){*,:before,:after,::backdrop{--tw-rotate-x:initial;--tw-rotate-y:initial;--tw-rotate-z:initial;--tw-skew-x:initial;--tw-skew-y:initial;--tw-border-style:solid;--tw-leading:initial;--tw-font-weight:initial;--tw-tracking:initial;--tw-ordinal:initial;--tw-slashed-zero:initial;--tw-numeric-figure:initial;--tw-numeric-spacing:initial;--tw-numeric-fraction:initial;--tw-border-spacing-x:0;--tw-border-spacing-y:0}}}@layer theme{:root,:host{--font-sans:"Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;--font-mono:"Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;--color-white:#fff;--spacing:.25rem;--font-weight-light:300;--font-weight-normal:400;--font-weight-medium:500;--font-weight-semibold:600;--font-weight-bold:700;--tracking-tight:-.025em;--tracking-normal:0em;--tracking-wide:.025em;--leading-tight:1.25;--leading-snug:1.375;--radius-md:.375rem;--default-font-family:var(--font-sans);--default-mono-font-family:var(--font-mono);--color-brand-900:#0f2544;--color-brand-700:#1b3a63;--color-brand-600:#255487;--color-brand-500:#3a6ea5;--color-brand-400:#4a7fb5;--color-brand-200:#c3d5e8;--color-brand-100:#dce7f1;--color-brand-50:#f2f6fa;--color-ink-900:#111c2b;--color-ink-700:#33465c;--color-ink-500:#5a6b80;--color-line:#d6dee7;--color-warn-50:#fdf6e8;--color-warn-500:#c99a2e;--color-warn-900:#6b4e10}}@layer base{*,:after,:before,::backdrop{box-sizing:border-box;border:0 solid;margin:0;padding:0}::file-selector-button{box-sizing:border-box;border:0 solid;margin:0;padding:0}html,:host{-webkit-text-size-adjust:100%;tab-size:4;line-height:1.5;font-family:var(--default-font-family,-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");font-feature-settings:var(--default-font-feature-settings,normal);font-variation-settings:var(--default-font-variation-settings,normal);-webkit-tap-highlight-color:transparent}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;-webkit-text-decoration:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,samp,pre{font-family:var(--default-mono-font-family,ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);font-feature-settings:var(--default-mono-font-feature-settings,normal);font-variation-settings:var(--default-mono-font-variation-settings,normal);font-size:1em}small{font-size:80%}sub,sup{vertical-align:baseline;font-size:75%;line-height:0;position:relative}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}:-moz-focusring:where(:not(iframe)){outline:auto}progress{vertical-align:baseline}summary{display:list-item}ol,ul,menu{list-style:none}img,svg,video,canvas,audio,iframe,embed,object{vertical-align:middle;display:block}img,video{max-width:100%;height:auto}button,input,select,optgroup,textarea{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}::file-selector-button{font:inherit;font-feature-settings:inherit;font-variation-settings:inherit;letter-spacing:inherit;color:inherit;opacity:1;background-color:#0000;border-radius:0}:where(select:is([multiple],[size])) optgroup{font-weight:bolder}:where(select:is([multiple],[size])) optgroup option{padding-inline-start:20px}::file-selector-button{margin-inline-end:4px}::placeholder{opacity:1}@supports (not ((-webkit-appearance:-apple-pay-button))) or (contain-intrinsic-size:1px){::placeholder{color:currentColor}@supports (color:color-mix(in lab, red, red)){::placeholder{color:color-mix(in oklab, currentcolor 50%, transparent)}}}textarea{resize:vertical}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-date-and-time-value{min-height:1lh;text-align:inherit}::-webkit-datetime-edit{display:inline-flex}::-webkit-datetime-edit-fields-wrapper{padding:0}::-webkit-datetime-edit{padding-block:0}::-webkit-datetime-edit-year-field{padding-block:0}::-webkit-datetime-edit-month-field{padding-block:0}::-webkit-datetime-edit-day-field{padding-block:0}::-webkit-datetime-edit-hour-field{padding-block:0}::-webkit-datetime-edit-minute-field{padding-block:0}::-webkit-datetime-edit-second-field{padding-block:0}::-webkit-datetime-edit-millisecond-field{padding-block:0}::-webkit-datetime-edit-meridiem-field{padding-block:0}::-webkit-calendar-picker-indicator{line-height:1}:-moz-ui-invalid{box-shadow:none}button,input:where([type=button],[type=reset],[type=submit]){appearance:button}::file-selector-button{appearance:button}::-webkit-inner-spin-button{height:auto}::-webkit-outer-spin-button{height:auto}[hidden]:where(:not([hidden=until-found])){display:none!important}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{background-color:var(--color-white);font-family:var(--font-sans);--tw-leading:1.52;color:var(--color-ink-900);--tw-numeric-spacing:tabular-nums;font-variant-numeric:var(--tw-ordinal, ) var(--tw-slashed-zero, ) var(--tw-numeric-figure, ) var(--tw-numeric-spacing, ) var(--tw-numeric-fraction, );font-size:9.6pt;line-height:1.52}h2{border-bottom-style:var(--tw-border-style);border-bottom-width:1.6pt;border-color:var(--color-brand-600);--tw-font-weight:var(--font-weight-bold);font-size:15pt;font-weight:var(--font-weight-bold);--tw-tracking:var(--tracking-tight);letter-spacing:var(--tracking-tight);color:var(--color-brand-900);break-after:avoid;text-wrap:balance;align-items:baseline;gap:3mm;margin-bottom:4mm;padding-bottom:2.4mm;display:flex}h3{--tw-font-weight:var(--font-weight-bold);font-size:10.6pt;font-weight:var(--font-weight-bold);color:var(--color-brand-700);break-after:avoid;text-wrap:balance;margin-top:6mm;margin-bottom:2.6mm}h4{--tw-font-weight:var(--font-weight-bold);font-size:9.6pt;font-weight:var(--font-weight-bold);color:var(--color-ink-700);break-after:avoid;margin-top:4.5mm;margin-bottom:2mm}p{max-width:168mm;margin-bottom:2.8mm}strong{--tw-font-weight:var(--font-weight-bold);font-weight:var(--font-weight-bold);color:var(--color-brand-900)}ul,ol{margin-block:1.5mm;margin-bottom:3mm;padding-left:5mm}ul{list-style-type:disc}ol{list-style-type:decimal}li{margin-bottom:1.2mm}li ::marker{color:var(--color-brand-400)}li::marker{color:var(--color-brand-400)}li ::-webkit-details-marker{color:var(--color-brand-400)}li::-webkit-details-marker{color:var(--color-brand-400)}code{border-style:var(--tw-border-style);border-width:.6pt;border-color:var(--color-line);background-color:var(--color-brand-50);font-family:var(--font-mono);white-space:nowrap;color:var(--color-brand-700);border-radius:2.5pt;padding-block:.3mm;padding-inline:1.1mm;font-size:8.2pt}}@layer components{.doc-section{margin-top:12mm}.doc-section.first{break-before:page;margin-top:0}.sec-num{font-family:var(--font-mono);--tw-font-weight:var(--font-weight-semibold);font-size:12pt;font-weight:var(--font-weight-semibold);color:var(--color-brand-500)}.path{--tw-font-weight:var(--font-weight-semibold);font-weight:var(--font-weight-semibold);color:var(--color-ink-500)}.fig{break-inside:avoid;border-radius:var(--radius-md);border-style:var(--tw-border-style);border-width:1px;border-color:var(--color-line);background-color:var(--color-white);padding-inline:5mm;margin-block:5mm;padding-top:5mm;padding-bottom:3.5mm}.fig svg{width:100%;height:auto;margin-inline:auto;display:block}.fig figcaption{border-top-style:var(--tw-border-style);border-top-width:1px;border-color:var(--color-line);--tw-leading:var(--leading-snug);font-size:8.2pt;line-height:var(--leading-snug);color:var(--color-ink-500);margin-top:3.5mm;padding-top:2.5mm}.fig figcaption b{--tw-font-weight:var(--font-weight-bold);font-weight:var(--font-weight-bold);color:var(--color-brand-700)}.src{font-family:var(--font-mono);color:var(--color-ink-500);margin-top:1.4mm;font-size:7.4pt;display:block}.tbl-wrap{margin-block:4mm;margin-bottom:6mm}.tbl-wrap:not(.long){break-inside:avoid}.tbl-title{--tw-font-weight:var(--font-weight-bold);font-size:8.6pt;font-weight:var(--font-weight-bold);color:var(--color-brand-700);break-after:avoid;align-items:baseline;gap:2mm;margin-bottom:2mm;display:flex}.tbl-title .tnum{background-color:var(--color-brand-100);font-family:var(--font-mono);--tw-font-weight:var(--font-weight-semibold);font-size:7.6pt;font-weight:var(--font-weight-semibold);color:var(--color-brand-900);border-radius:2pt;padding-block:.3mm;padding-inline:1.8mm}.tbl-title .tref{font-family:var(--font-mono);--tw-font-weight:var(--font-weight-normal);font-size:7.2pt;font-weight:var(--font-weight-normal);color:var(--color-ink-500);margin-left:auto}.tbl-frame{border-radius:var(--radius-md);border-style:var(--tw-border-style);border-width:1px;border-color:var(--color-line)}.tbl{border-collapse:separate;--tw-border-spacing-x:0px;--tw-border-spacing-y:0px;width:100%;border-spacing:var(--tw-border-spacing-x) var(--tw-border-spacing-y);--tw-leading:1.4;font-size:8.6pt;line-height:1.4}.tbl thead{display:table-header-group}.tbl tr{break-inside:avoid}.tbl th{background-color:var(--color-brand-900);text-align:left;vertical-align:bottom;--tw-font-weight:var(--font-weight-semibold);font-size:7.2pt;font-weight:var(--font-weight-semibold);--tw-tracking:.07em;letter-spacing:.07em;color:var(--color-white);text-transform:uppercase;padding-block:2.1mm;padding-inline:3mm}.tbl th:first-child{border-top-left-radius:5px}.tbl th:last-child{border-top-right-radius:5px}.tbl th.r,.tbl td.r{text-align:right}.tbl td{border-bottom-style:var(--tw-border-style);border-bottom-width:1px;border-color:var(--color-line);vertical-align:top;color:var(--color-ink-900);padding-block:1.4mm;padding-inline:3mm}.tbl tbody tr:last-child td{border-bottom-style:var(--tw-border-style);border-bottom-width:0}.tbl tbody tr:nth-child(2n) td{background-color:#f2f6fab3}@supports (color:color-mix(in lab, red, red)){.tbl tbody tr:nth-child(2n) td{background-color:color-mix(in oklab, var(--color-brand-50) 70%, transparent)}}.tbl tbody tr.grp td{border-block-style:var(--tw-border-style);border-block-width:1px;border-color:var(--color-brand-200);background-color:var(--color-brand-100);--tw-font-weight:var(--font-weight-bold);font-size:7.2pt;font-weight:var(--font-weight-bold);--tw-tracking:.09em;letter-spacing:.09em;color:var(--color-brand-900);text-transform:uppercase;padding-block:1.2mm}.tbl tbody tr.grp:first-child td{border-top-style:var(--tw-border-style);border-top-width:0}.tbl td.k{--tw-font-weight:var(--font-weight-semibold);font-weight:var(--font-weight-semibold);white-space:nowrap;color:var(--color-brand-900)}.tbl td.mono{font-family:var(--font-mono);white-space:nowrap;color:var(--color-brand-700);font-size:8pt}.tbl td.num{text-align:right;--tw-font-weight:var(--font-weight-semibold);font-weight:var(--font-weight-semibold);white-space:nowrap}.tbl td.dim{color:var(--color-ink-500);font-size:7.9pt}.cd{border-style:var(--tw-border-style);border-width:.6pt;border-color:var(--color-line);background-color:var(--color-brand-50);font-family:var(--font-mono);white-space:nowrap;color:var(--color-brand-700);border-radius:2.5pt;padding-block:.2mm;padding-inline:1.1mm;font-size:8pt;display:inline-block}.pill{text-align:center;min-width:11mm;font-family:var(--font-mono);--tw-font-weight:var(--font-weight-bold);font-size:7.4pt;font-weight:var(--font-weight-bold);--tw-tracking:var(--tracking-wide);letter-spacing:var(--tracking-wide);border-radius:2147483647px;padding-block:.3mm;padding-inline:2mm;display:inline-block}.pill-get{background-color:var(--color-brand-100);color:var(--color-brand-900)}.pill-post{background-color:var(--color-brand-600);color:var(--color-white)}.pill-code{border-style:var(--tw-border-style);border-width:1px;border-color:var(--color-brand-400);background-color:var(--color-white);min-width:0;color:var(--color-brand-700)}.tag{background-color:var(--color-brand-100);--tw-font-weight:var(--font-weight-semibold);font-size:7.4pt;font-weight:var(--font-weight-semibold);color:var(--color-brand-900);border-radius:2pt;padding-block:.2mm;padding-inline:1.4mm;display:inline-block}.note,.warn{break-inside:avoid;border-left-style:var(--tw-border-style);margin-block:3.5mm;border-left-width:2.6pt;border-top-right-radius:3pt;border-bottom-right-radius:3pt;max-width:168mm;margin-bottom:5mm;padding-block:3mm;padding-inline:4mm;font-size:8.9pt}.note{border-color:var(--color-brand-400);background-color:var(--color-brand-50);color:var(--color-ink-700)}.note b{color:var(--color-brand-700)}.warn{border-color:var(--color-warn-500);background-color:var(--color-warn-50);color:var(--color-warn-900)}.warn b{color:#4d3809}.kpi{margin-block:4mm;grid-template-columns:repeat(3,minmax(0,1fr));gap:4mm;margin-bottom:6mm;display:grid}.kpi>div{border-top-style:var(--tw-border-style);border-top-width:2.6pt;border-color:var(--color-brand-400);background-color:var(--color-brand-50);border-bottom-right-radius:3pt;border-bottom-left-radius:3pt;padding-block:3.4mm;padding-inline:4mm}.kpi dt{--tw-font-weight:var(--font-weight-bold);font-size:7.2pt;font-weight:var(--font-weight-bold);--tw-tracking:.11em;letter-spacing:.11em;color:var(--color-ink-500);text-transform:uppercase;margin-bottom:1.4mm}.kpi dd{--tw-leading:1;--tw-font-weight:var(--font-weight-bold);font-size:15pt;line-height:1;font-weight:var(--font-weight-bold);color:var(--color-brand-900)}.kpi dd small{--tw-leading:var(--leading-snug);font-size:8pt;line-height:var(--leading-snug);--tw-font-weight:var(--font-weight-normal);font-weight:var(--font-weight-normal);--tw-tracking:var(--tracking-normal);letter-spacing:var(--tracking-normal);color:var(--color-ink-500);margin-top:1.6mm;display:block}.bytemap{grid-template-columns:repeat(17,minmax(0,1fr));gap:1.6mm .6mm;display:grid}.bytemap .off{font-family:var(--font-mono);--tw-leading:1;white-space:nowrap;color:var(--color-ink-500);padding-bottom:.4mm;font-size:6.8pt;line-height:1;display:block;overflow:visible}.bytemap .cell{border-style:var(--tw-border-style);border-width:1px;border-color:var(--color-brand-400);text-align:center;--tw-leading:var(--leading-tight);min-height:12mm;line-height:var(--leading-tight);border-radius:3pt;flex-direction:column;justify-content:center;align-items:center;padding-inline:.6mm;display:flex}.bytemap .cell b{--tw-font-weight:var(--font-weight-bold);font-size:7.4pt;font-weight:var(--font-weight-bold);color:var(--color-brand-900);display:block}.bytemap .cell i{--tw-font-weight:var(--font-weight-medium);font-size:6.6pt;font-weight:var(--font-weight-medium);color:var(--color-ink-700);font-style:normal;display:block}.bytemap .c1{background-color:var(--color-brand-100)}.bytemap .c2{background-color:var(--color-brand-50)}.bytemap .crc{border-color:var(--color-brand-700);background-color:var(--color-brand-700)}.bytemap .crc b,.bytemap .crc i{color:var(--color-white)}.bytemap .var{--tw-border-style:dashed;border-style:dashed}.s-box{fill:var(--color-white);stroke:var(--color-brand-600);stroke-width:1.5px}.s-box-dash{fill:var(--color-white);stroke:var(--color-brand-400);stroke-width:1.5px;stroke-dasharray:6 4}.s-box-soft{fill:var(--color-brand-100);stroke:var(--color-brand-400);stroke-width:1.2px}.s-head{fill:var(--color-brand-600)}.s-head-alt{fill:var(--color-brand-500)}.s-foot{fill:var(--color-brand-50)}.steps{counter-reset:paso;margin-block:2mm;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.2mm 6mm;margin-bottom:0;padding-left:0;list-style-type:none;display:grid}.steps li{--tw-leading:var(--leading-snug);font-size:8.2pt;line-height:var(--leading-snug);color:var(--color-ink-700);counter-increment:paso;margin-bottom:0;padding-left:6mm;position:relative}.steps li:before{content:counter(paso);border-style:var(--tw-border-style);border-width:1px;border-color:var(--color-brand-600);background-color:var(--color-white);--tw-font-weight:var(--font-weight-bold);width:4.2mm;height:4.2mm;font-size:7pt;font-weight:var(--font-weight-bold);color:var(--color-brand-900);border-radius:2147483647px;justify-content:center;align-items:center;display:flex;position:absolute;top:.2mm;left:0}.s-ttl{fill:var(--color-white);--tw-font-weight:var(--font-weight-bold);font-size:11px;font-weight:var(--font-weight-bold);--tw-tracking:var(--tracking-wide);letter-spacing:var(--tracking-wide)}.s-ttl-dark{fill:var(--color-brand-900);--tw-font-weight:var(--font-weight-bold);font-size:11px;font-weight:var(--font-weight-bold)}.s-txt{fill:var(--color-ink-700);font-size:10px}.s-dim{fill:var(--color-ink-500);font-size:10px}.s-mono{fill:var(--color-brand-700);font-family:var(--font-mono);font-size:9.5px}.s-val{fill:var(--color-brand-900);font-family:var(--font-mono);--tw-font-weight:var(--font-weight-bold);font-size:9.5px;font-weight:var(--font-weight-bold)}.s-lbl{fill:var(--color-ink-500);--tw-font-weight:var(--font-weight-bold);font-size:9px;font-weight:var(--font-weight-bold);--tw-tracking:.12em;letter-spacing:.12em}.s-ln{fill:none;stroke:var(--color-brand-600);stroke-width:1.6px}.s-ln-dir{fill:none;stroke:var(--color-brand-400);stroke-width:1.6px}.s-ln-ret{fill:none;stroke:var(--color-brand-400);stroke-width:1.4px;stroke-dasharray:5 3}.s-life{stroke:var(--color-brand-200);stroke-width:1px;stroke-dasharray:4 4}.s-rule{stroke:var(--color-line);stroke-width:1px}.s-badge{fill:var(--color-white);stroke:var(--color-brand-600);stroke-width:1.4px}.s-badge-t{fill:var(--color-brand-900);--tw-font-weight:var(--font-weight-bold);font-size:10px;font-weight:var(--font-weight-bold)}.s-halo{stroke:var(--color-white);stroke-width:3px;paint-order:stroke}.s-th{fill:var(--color-brand-100)}.s-tbl{fill:var(--color-white);stroke:var(--color-brand-400);stroke-width:1.2px}.s-name{fill:var(--color-brand-900);font-family:var(--font-mono);--tw-font-weight:var(--font-weight-bold);font-size:10.5px;font-weight:var(--font-weight-bold)}.s-col{fill:var(--color-ink-700);font-family:var(--font-mono);font-size:9px}.s-chip{fill:var(--color-brand-900);--tw-font-weight:var(--font-weight-bold);font-size:10px;font-weight:var(--font-weight-bold)}.s-link{fill:none;stroke:var(--color-brand-400);stroke-width:1.4px}.foot{border-top-style:var(--tw-border-style);border-top-width:1px;border-color:var(--color-line);text-align:center;color:var(--color-ink-500);margin-top:3mm;padding-top:2mm;font-size:7.6pt}}@layer utilities{.col-span-1{grid-column:span 1/span 1}.col-span-2{grid-column:span 2/span 2}.col-span-4{grid-column:span 4/span 4}.col-span-15{grid-column:span 15/span 15}.col-span-16{grid-column:span 16/span 16}.mx-auto{margin-inline:auto}.my-\[9mm\]{margin-block:9mm}.mt-\[0\.8mm\]{margin-top:.8mm}.mt-\[4mm\]{margin-top:4mm}.mt-auto{margin-top:auto}.mb-\[1\.6mm\]{margin-bottom:1.6mm}.mb-\[5mm\]{margin-bottom:5mm}.mb-\[12mm\]{margin-bottom:12mm}.block{display:block}.flex{display:flex}.grid{display:grid}.h-\[2\.4pt\]{height:2.4pt}.min-h-\[247mm\]{min-height:247mm}.w-\[11mm\]{width:11mm}.w-\[12mm\]{width:12mm}.w-\[14mm\]{width:14mm}.w-\[15mm\]{width:15mm}.w-\[16mm\]{width:16mm}.w-\[20mm\]{width:20mm}.w-\[22mm\]{width:22mm}.w-\[24mm\]{width:24mm}.w-\[26mm\]{width:26mm}.w-\[27mm\]{width:27mm}.w-\[28mm\]{width:28mm}.w-\[30mm\]{width:30mm}.w-\[33mm\]{width:33mm}.w-\[34mm\]{width:34mm}.w-\[36mm\]{width:36mm}.w-\[40mm\]{width:40mm}.w-\[44mm\]{width:44mm}.w-\[45mm\]{width:45mm}.w-\[46mm\]{width:46mm}.w-\[48mm\]{width:48mm}.w-\[50mm\]{width:50mm}.w-\[52mm\]{width:52mm}.w-\[56mm\]{width:56mm}.w-\[58mm\]{width:58mm}.w-\[84mm\]{width:84mm}.w-full{width:100%}.max-w-\[132mm\]{max-width:132mm}.max-w-\[145mm\]{max-width:145mm}.max-w-\[178mm\]{max-width:178mm}.min-w-0{min-width:0}.transform{transform:var(--tw-rotate-x, ) var(--tw-rotate-y, ) var(--tw-rotate-z, ) var(--tw-skew-x, ) var(--tw-skew-y, )}.\[break-before\:page\]{break-before:page}.\[break-inside\:avoid\],.break-inside-avoid{break-inside:avoid}.\[break-after\:page\]{break-after:page}.grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.flex-col{flex-direction:column}.gap-\[6mm\]{gap:6mm}.border-t{border-top-style:var(--tw-border-style);border-top-width:1px}.border-t-\[5mm\]{border-top-style:var(--tw-border-style);border-top-width:5mm}.border-brand-600{border-color:var(--color-brand-600)}.border-line{border-color:var(--color-line)}.bg-brand-600{background-color:var(--color-brand-600)}.fill-brand-50{fill:var(--color-brand-50)}.fill-brand-400{fill:var(--color-brand-400)}.fill-brand-500{fill:var(--color-brand-500)}.fill-brand-600{fill:var(--color-brand-600)}.fill-brand-700{fill:var(--color-brand-700)}.stroke-brand-400{stroke:var(--color-brand-400)}.stroke-line{stroke:var(--color-line)}.stroke-\[1\.4\]{stroke-width:1.4px}.stroke-\[1\.6\]{stroke-width:1.6px}.px-4{padding-inline:calc(var(--spacing) * 4)}.py-8{padding-block:calc(var(--spacing) * 8)}.pt-\[6mm\]{padding-top:6mm}.pt-\[12mm\]{padding-top:12mm}.font-sans{font-family:var(--font-sans)}.text-\[7\.4pt\]{font-size:7.4pt}.text-\[8\.2pt\]{font-size:8.2pt}.text-\[8pt\]{font-size:8pt}.text-\[9\.4pt\]{font-size:9.4pt}.text-\[9px\]{font-size:9px}.text-\[11pt\]{font-size:11pt}.text-\[14pt\]{font-size:14pt}.text-\[30pt\]{font-size:30pt}.leading-\[1\.4\]{--tw-leading:1.4;line-height:1.4}.leading-\[1\.12\]{--tw-leading:1.12;line-height:1.12}.leading-\[1\.62\]{--tw-leading:1.62;line-height:1.62}.font-bold{--tw-font-weight:var(--font-weight-bold);font-weight:var(--font-weight-bold)}.font-light{--tw-font-weight:var(--font-weight-light);font-weight:var(--font-weight-light)}.font-normal{--tw-font-weight:var(--font-weight-normal);font-weight:var(--font-weight-normal)}.font-semibold{--tw-font-weight:var(--font-weight-semibold);font-weight:var(--font-weight-semibold)}.tracking-\[0\.13em\]{--tw-tracking:.13em;letter-spacing:.13em}.tracking-\[0\.18em\]{--tw-tracking:.18em;letter-spacing:.18em}.tracking-normal{--tw-tracking:var(--tracking-normal);letter-spacing:var(--tracking-normal)}.tracking-tight{--tw-tracking:var(--tracking-tight);letter-spacing:var(--tracking-tight)}.text-brand-600{color:var(--color-brand-600)}.text-brand-900{color:var(--color-brand-900)}.text-ink-500{color:var(--color-ink-500)}.text-ink-700{color:var(--color-ink-700)}.uppercase{text-transform:uppercase}@media print{.print\:max-w-none{max-width:none}.print\:p-0{padding:0}}}@page{size:A4;margin:18mm 16mm}@property --tw-rotate-x{syntax:"*";inherits:false}@property --tw-rotate-y{syntax:"*";inherits:false}@property --tw-rotate-z{syntax:"*";inherits:false}@property --tw-skew-x{syntax:"*";inherits:false}@property --tw-skew-y{syntax:"*";inherits:false}@property --tw-border-style{syntax:"*";inherits:false;initial-value:solid}@property --tw-leading{syntax:"*";inherits:false}@property --tw-font-weight{syntax:"*";inherits:false}@property --tw-tracking{syntax:"*";inherits:false}@property --tw-ordinal{syntax:"*";inherits:false}@property --tw-slashed-zero{syntax:"*";inherits:false}@property --tw-numeric-figure{syntax:"*";inherits:false}@property --tw-numeric-spacing{syntax:"*";inherits:false}@property --tw-numeric-fraction{syntax:"*";inherits:false}@property --tw-border-spacing-x{syntax:"<length>";inherits:false;initial-value:0}@property --tw-border-spacing-y{syntax:"<length>";inherits:false;initial-value:0}
+</style>
+</head>
+<body>
+<main class="mx-auto w-full max-w-[178mm] px-4 py-8 print:max-w-none print:p-0">
+
+<!-- ==================== PORTADA ==================== -->
+<section class="flex min-h-[247mm] flex-col border-t-[5mm] border-brand-600 pt-[12mm] [break-after:page]">
+  <p class="mb-[5mm] text-[8pt] font-bold tracking-[0.18em] text-brand-600 uppercase">Hackatón ExpoASI 2026 · UNAL Manizales</p>
+  <h1 class="max-w-[145mm] text-[30pt] leading-[1.12] font-bold tracking-tight text-brand-900">
+    SARD
+    <span class="mt-[4mm] block text-[14pt] font-light tracking-normal text-ink-700">Sistema Agéntico de Respuesta y Resiliencia ante Desastres</span>
+  </h1>
+  <div class="my-[9mm] h-[2.4pt] w-[34mm] bg-brand-600"></div>
+  <p class="mb-[12mm] max-w-[132mm] text-[11pt] leading-[1.62] text-ink-700">
+    Documento de arquitectura del prototipo SARD: un sistema de coordinación de
+    emergencias que opera sobre redes degradadas, agrupa reportes ciudadanos por
+    lugar y tiempo, los prioriza por reglas verificables y deja la decisión final
+    de despacho en manos de una persona.
+  </p>
+
+  <dl class="mt-auto grid grid-cols-3 gap-[6mm] border-t border-line pt-[6mm]">
+    <div class="min-w-0">
+      <dt class="mb-[1.6mm] text-[7.4pt] font-bold tracking-[0.13em] text-ink-500 uppercase">Entregable</dt>
+      <dd class="text-[9.4pt] leading-[1.4] font-semibold">E3 — Arquitectura<small class="mt-[0.8mm] block text-[8.2pt] font-normal text-ink-500">Documento formal para el jurado</small></dd>
+    </div>
+    <div class="min-w-0">
+      <dt class="mb-[1.6mm] text-[7.4pt] font-bold tracking-[0.13em] text-ink-500 uppercase">Repositorio</dt>
+      <dd class="text-[9.4pt] leading-[1.4] font-semibold">Dfill-16/sard_hackaton<small class="mt-[0.8mm] block text-[8.2pt] font-normal text-ink-500">rama feat/capa-negocio · commit 0072a92</small></dd>
+    </div>
+    <div class="min-w-0">
+      <dt class="mb-[1.6mm] text-[7.4pt] font-bold tracking-[0.13em] text-ink-500 uppercase">Fecha</dt>
+      <dd class="text-[9.4pt] leading-[1.4] font-semibold">10 de noviembre de 2026<small class="mt-[0.8mm] block text-[8.2pt] font-normal text-ink-500">PHP 8.5 · Laravel 13.40</small></dd>
+    </div>
+  </dl>
+</section>
+
+<!-- ==================== 00 RESUMEN ==================== -->
+<section class="doc-section first">
+  <h2><span class="sec-num">00</span>Resumen ejecutivo</h2>
+
+  <p>
+    SARD coordina la respuesta a desastres cuando la infraestructura de comunicación
+    habitual está caída. Recibe reportes ciudadanos en formato binario, los agrupa
+    por proximidad espacial y temporal, asigna una prioridad calculada por reglas
+    explícitas y presenta al operador una cola con la evidencia completa para que
+    decida a qué unidad enviar. Si el nodo líder deja de responder, otro lo sustituye
+    de forma automática sin duplicar ni perder la cadena de eventos.
+  </p>
+
+  <p>
+    El sistema se ejecuta como <strong>cinco procesos del mismo código Laravel</strong>,
+    distinguidos únicamente por la variable de entorno <code>NODE_ROLE</code>. Cada
+    proceso tiene su propia base SQLite, de modo que opera de forma independiente y
+    necesita replicar por UUID. Los mensajes entre procesos atraviesan un
+    <em>canal simulado</em> que pierde, retrasa y desordena mensajes de forma
+    reproducible, para probar el sistema en condiciones hostiles.
+  </p>
+
+  <div class="kpi">
+    <div>
+      <dt>Compresión del reporte</dt>
+      <dd>78 B<small>78 bytes binarios frente a 185 bytes en JSON</small></dd>
+    </div>
+    <div>
+      <dt>Detección de caída</dt>
+      <dd>10 s<small>10 latidos perdidos de 1 s cada uno</small></dd>
+    </div>
+    <div>
+      <dt>Pruebas automáticas</dt>
+      <dd>210<small>2316 aserciones, todas en verde</small></dd>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Cómo se verificó.</b> Cada dato del documento sale del código (con cita
+    <code>archivo:línea</code>) o de una ejecución real con los cinco procesos
+    levantados: reporte → ACK → triaje → decisión humana → alerta a campo → acuse,
+    failover del líder con marca de tiempo e integridad de la cadena de hash. Las
+    estimaciones y las propuestas futuras se rotulan como tales.
+  </div>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 1</span>Contenido requerido y dónde está</div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead><tr><th scope="col" class="w-[58mm]">Requisito del entregable</th><th scope="col" class="w-[22mm]">Sección</th><th scope="col">Figuras</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Diagrama de componentes</td><td class="mono">01</td><td>Fig. 1 y Fig. 2</td></tr>
+        <tr><td class="k">Distribución de agentes</td><td class="mono">02</td><td>Fig. 3</td></tr>
+        <tr><td class="k">Flujos de mensajes</td><td class="mono">03</td><td>Fig. 4</td></tr>
+        <tr><td class="k">Almacenamiento</td><td class="mono">04</td><td>Fig. 5</td></tr>
+        <tr><td class="k">Dependencias</td><td class="mono">05</td><td>Fig. 6</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <h3>Alcance y límites del documento</h3>
+  <p>
+    Este documento describe <strong>la arquitectura que existe en el código</strong>.
+    No cubre los entregables E5 (protocolo formal) ni E6 (informe de pruebas). El
+    enlace por radiofrecuencia de la sección 11 es una propuesta posterior al
+    prototipo y no forma parte de lo implementado.
+  </p>
+</section>
+
+<!-- ==================== 01 ARQUITECTURA ==================== -->
+<section class="doc-section [break-before:page]">
+  <h2><span class="sec-num">01</span>Diagrama de componentes</h2>
+
+  <p>
+    El sistema gira en torno al <strong>canal simulado</strong>. Los mensajes de negocio
+    (reporte, ACK, alerta y acuse) viajan siempre por él; el tráfico de control entre
+    B y C (latidos, réplica y unión) y el anuncio de un nuevo líder son enlaces
+    directos. Cada proceso guarda su cuaderno de eventos en su propia base SQLite.
+  </p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 680 404" class="font-sans" role="img" aria-label="Diagrama de componentes de SARD: PWA, nodos A, D, B y C conectados a través del canal">
+      <defs>
+        <marker id="m-ch" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="10" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-brand-600"/></marker>
+        <marker id="m-dir" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="10" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-brand-400"/></marker>
+      </defs>
+
+      <!-- Cabeceras de columna -->
+      <text class="s-lbl" x="0" y="12">ENTRADA Y CAMPO</text>
+      <line class="s-rule" x1="0" y1="20" x2="170" y2="20"/>
+      <text class="s-lbl" x="260" y="12">TRANSPORTE</text>
+      <line class="s-rule" x1="260" y1="20" x2="420" y2="20"/>
+      <text class="s-lbl" x="510" y="12">COORDINACIÓN · LÍDER B O C</text>
+      <line class="s-rule" x1="510" y1="20" x2="680" y2="20"/>
+
+      <!-- PWA -->
+      <g transform="translate(0,34)">
+        <rect class="s-box-soft" x="0.6" y="0.6" width="168.8" height="50.8" rx="6"/>
+        <text class="s-ttl-dark" x="85" y="22" text-anchor="middle">PWA ciudadana</text>
+        <text class="s-txt" x="85" y="38" text-anchor="middle">IndexedDB · service worker</text>
+      </g>
+
+      <!-- Nodo A -->
+      <g transform="translate(0,124)">
+        <rect class="s-box" x="0.75" y="0.75" width="168.5" height="94.5" rx="6"/>
+        <path class="s-foot" d="M1.5,74 H168.5 V89.25 a5.25,5.25 0 0 1 -5.25,5.25 H6.75 a5.25,5.25 0 0 1 -5.25,-5.25 Z"/>
+        <line class="s-rule" x1="1.5" y1="74" x2="168.5" y2="74"/>
+        <path class="s-head" d="M1.5,26 V6.75 a5.25,5.25 0 0 1 5.25,-5.25 H163.25 a5.25,5.25 0 0 1 5.25,5.25 V26 Z"/>
+        <text class="s-ttl" x="12" y="17.5">NODO A</text>
+        <text class="s-ttl" x="158" y="17.5" text-anchor="end">:8001</text>
+        <text class="s-txt" x="12" y="46">Ingesta · ACK de 17 B</text>
+        <text class="s-txt" x="12" y="61">A4 · cola de salida</text>
+        <text class="s-mono" x="12" y="88.5">nodo_a.sqlite</text>
+      </g>
+
+      <!-- Nodo D -->
+      <g transform="translate(0,272)">
+        <rect class="s-box" x="0.75" y="0.75" width="168.5" height="94.5" rx="6"/>
+        <path class="s-foot" d="M1.5,74 H168.5 V89.25 a5.25,5.25 0 0 1 -5.25,5.25 H6.75 a5.25,5.25 0 0 1 -5.25,-5.25 Z"/>
+        <line class="s-rule" x1="1.5" y1="74" x2="168.5" y2="74"/>
+        <path class="s-head" d="M1.5,26 V6.75 a5.25,5.25 0 0 1 5.25,-5.25 H163.25 a5.25,5.25 0 0 1 5.25,5.25 V26 Z"/>
+        <text class="s-ttl" x="12" y="17.5">NODO D</text>
+        <text class="s-ttl" x="158" y="17.5" text-anchor="end">:8004</text>
+        <text class="s-txt" x="12" y="46">Vista de campo</text>
+        <text class="s-txt" x="12" y="61">Recibir alerta · acusar</text>
+        <text class="s-mono" x="12" y="88.5">nodo_d.sqlite</text>
+      </g>
+
+      <!-- CANAL -->
+      <g transform="translate(260,124)">
+        <rect class="s-box-dash" x="0.75" y="0.75" width="158.5" height="242.5" rx="6"/>
+        <path class="s-foot" d="M1.5,222 H158.5 V237.25 a5.25,5.25 0 0 1 -5.25,5.25 H6.75 a5.25,5.25 0 0 1 -5.25,-5.25 Z"/>
+        <line class="s-rule" x1="1.5" y1="222" x2="158.5" y2="222"/>
+        <path class="s-head-alt" d="M1.5,26 V6.75 a5.25,5.25 0 0 1 5.25,-5.25 H153.25 a5.25,5.25 0 0 1 5.25,5.25 V26 Z"/>
+        <text class="s-ttl" x="12" y="17.5">CANAL</text>
+        <text class="s-ttl" x="148" y="17.5" text-anchor="end">:8010</text>
+
+        <text class="s-dim" x="12" y="47">pérdida</text><text class="s-val" x="148" y="47" text-anchor="end">30 %</text>
+        <line class="s-rule" x1="12" y1="54" x2="148" y2="54"/>
+        <text class="s-dim" x="12" y="69">latencia</text><text class="s-val" x="148" y="69" text-anchor="end">200–3000 ms</text>
+        <line class="s-rule" x1="12" y1="76" x2="148" y2="76"/>
+        <text class="s-dim" x="12" y="91">desorden</text><text class="s-val" x="148" y="91" text-anchor="end">20 %</text>
+        <line class="s-rule" x1="12" y1="98" x2="148" y2="98"/>
+        <text class="s-dim" x="12" y="113">ventanas</text><text class="s-val" x="148" y="113" text-anchor="end">5 s / 15 s</text>
+        <line class="s-rule" x1="12" y1="120" x2="148" y2="120"/>
+        <text class="s-dim" x="12" y="135">saltos</text><text class="s-val" x="148" y="135" text-anchor="end">1 (hasta 3)</text>
+        <line class="s-rule" x1="12" y1="142" x2="148" y2="142"/>
+        <text class="s-dim" x="12" y="157">MTU</text><text class="s-val" x="148" y="157" text-anchor="end">200 B</text>
+        <line class="s-rule" x1="12" y1="164" x2="148" y2="164"/>
+        <text class="s-dim" x="12" y="179">semilla</text><text class="s-val" x="148" y="179" text-anchor="end">42</text>
+
+        <text class="s-txt" x="80" y="203" text-anchor="middle">Nunca reintenta:</text>
+        <text class="s-txt" x="80" y="215" text-anchor="middle">reintenta el emisor</text>
+        <text class="s-mono" x="12" y="236.5">canal.sqlite</text>
+      </g>
+
+      <!-- Nodo B -->
+      <g transform="translate(510,124)">
+        <rect class="s-box" x="0.75" y="0.75" width="168.5" height="94.5" rx="6"/>
+        <path class="s-foot" d="M1.5,74 H168.5 V89.25 a5.25,5.25 0 0 1 -5.25,5.25 H6.75 a5.25,5.25 0 0 1 -5.25,-5.25 Z"/>
+        <line class="s-rule" x1="1.5" y1="74" x2="168.5" y2="74"/>
+        <path class="s-head" d="M1.5,26 V6.75 a5.25,5.25 0 0 1 5.25,-5.25 H163.25 a5.25,5.25 0 0 1 5.25,5.25 V26 Z"/>
+        <text class="s-ttl" x="12" y="17.5">NODO B</text>
+        <text class="s-ttl" x="158" y="17.5" text-anchor="end">:8002</text>
+        <text class="s-txt" x="12" y="46">Agentes A1 A2 A3 A5 A6</text>
+        <text class="s-txt" x="12" y="61">Tablero de mando</text>
+        <text class="s-mono" x="12" y="88.5">nodo_b.sqlite</text>
+      </g>
+
+      <!-- Nodo C -->
+      <g transform="translate(510,272)">
+        <rect class="s-box" x="0.75" y="0.75" width="168.5" height="94.5" rx="6"/>
+        <path class="s-foot" d="M1.5,74 H168.5 V89.25 a5.25,5.25 0 0 1 -5.25,5.25 H6.75 a5.25,5.25 0 0 1 -5.25,-5.25 Z"/>
+        <line class="s-rule" x1="1.5" y1="74" x2="168.5" y2="74"/>
+        <path class="s-head" d="M1.5,26 V6.75 a5.25,5.25 0 0 1 5.25,-5.25 H163.25 a5.25,5.25 0 0 1 5.25,5.25 V26 Z"/>
+        <text class="s-ttl" x="12" y="17.5">NODO C</text>
+        <text class="s-ttl" x="158" y="17.5" text-anchor="end">:8003</text>
+        <text class="s-txt" x="12" y="46">Agentes A1 A2 A3 A5 A6</text>
+        <text class="s-txt" x="12" y="61">Tablero de mando</text>
+        <text class="s-mono" x="12" y="88.5">nodo_c.sqlite</text>
+      </g>
+
+      <!-- PWA ↔ A (directo) -->
+      <line class="s-ln-dir" x1="85" y1="86" x2="85" y2="124" marker-start="url(#m-dir)" marker-end="url(#m-dir)"/>
+      <circle class="s-badge" cx="85" cy="105" r="8"/><text class="s-badge-t" x="85" y="108.5" text-anchor="middle">1</text>
+
+      <!-- A ↔ CANAL -->
+      <line class="s-ln" x1="170" y1="156" x2="260" y2="156" marker-end="url(#m-ch)"/>
+      <circle class="s-badge" cx="215" cy="156" r="8"/><text class="s-badge-t" x="215" y="159.5" text-anchor="middle">2</text>
+      <line class="s-ln" x1="260" y1="188" x2="170" y2="188" marker-end="url(#m-ch)"/>
+      <circle class="s-badge" cx="215" cy="188" r="8"/><text class="s-badge-t" x="215" y="191.5" text-anchor="middle">3</text>
+
+      <!-- D ↔ CANAL -->
+      <line class="s-ln" x1="260" y1="304" x2="170" y2="304" marker-end="url(#m-ch)"/>
+      <circle class="s-badge" cx="215" cy="304" r="8"/><text class="s-badge-t" x="215" y="307.5" text-anchor="middle">4</text>
+      <line class="s-ln" x1="170" y1="336" x2="260" y2="336" marker-end="url(#m-ch)"/>
+      <circle class="s-badge" cx="215" cy="336" r="8"/><text class="s-badge-t" x="215" y="339.5" text-anchor="middle">5</text>
+
+      <!-- CANAL ↔ B / C -->
+      <line class="s-ln" x1="420" y1="156" x2="510" y2="156" marker-end="url(#m-ch)"/>
+      <line class="s-ln" x1="510" y1="188" x2="420" y2="188" marker-end="url(#m-ch)"/>
+      <line class="s-ln" x1="420" y1="304" x2="510" y2="304" marker-end="url(#m-ch)"/>
+      <line class="s-ln" x1="510" y1="336" x2="420" y2="336" marker-end="url(#m-ch)"/>
+
+      <!-- B ↔ C (directo) -->
+      <line class="s-ln-dir" x1="530" y1="220" x2="530" y2="272" marker-start="url(#m-dir)" marker-end="url(#m-dir)"/>
+      <text class="s-ttl-dark" x="544" y="242">Enlace directo</text>
+      <text class="s-dim" x="544" y="256">latido · réplica · unión</text>
+
+      <!-- Leyenda -->
+      <line class="s-rule" x1="0" y1="376" x2="680" y2="376"/>
+      <line class="s-ln" x1="0" y1="392" x2="24" y2="392" marker-end="url(#m-ch)"/>
+      <text class="s-dim" x="32" y="395.5">mensaje por el canal</text>
+      <line class="s-ln-dir" x1="170" y1="392" x2="194" y2="392" marker-start="url(#m-dir)" marker-end="url(#m-dir)"/>
+      <text class="s-dim" x="202" y="395.5">enlace directo</text>
+      <rect class="s-box-dash" x="310" y="386" width="22" height="12" rx="2"/>
+      <text class="s-dim" x="340" y="395.5">transporte degradado</text>
+      <rect x="470" y="386" width="22" height="12" rx="2" class="fill-brand-50 stroke-line"/>
+      <text class="s-dim" x="500" y="395.5">base SQLite propia</text>
+    </svg>
+    <figcaption>
+      <b>Fig. 1</b> — Componentes y flujos. Cinco procesos del mismo código, diferenciados por
+      <code>NODE_ROLE</code>. El líder es B o C; el otro actúa como seguidor.
+      <ol class="steps">
+        <li>La PWA envía el reporte binario a A y recibe el ACK de 17 B.</li>
+        <li>A lo envía por el canal al líder.</li>
+        <li>El líder confirma con un ACK que vuelve a A por el canal.</li>
+        <li>Tras la decisión humana, el líder envía la alerta a D por el canal.</li>
+        <li>D devuelve el acuse de recibo al líder por el canal.</li>
+      </ol>
+      <span class="src">Fuente: scripts/start.ps1:51-57,71-77 · routes/api.php:23-82 · routes/web.php:8-20</span>
+    </figcaption>
+  </figure>
+
+<div class="[break-inside:avoid]">
+  <h3>01.1 Topología de replicación entre B y C</h3>
+
+  <p>
+    B y C ejecutan el mismo código y compiten por el papel de líder. El líder envía un
+    <strong>latido</strong> directo al otro cada segundo; el seguidor que acumula diez
+    segundos sin recibirlo sube la <strong>época</strong>, asume el mando y anuncia el
+    cambio a A y D. El seguidor copia el cuaderno del líder por lotes. Cuando un nodo
+    caído regresa, descubre la época mayor, queda como seguidor y une su cuaderno por
+    UUID sin duplicar eventos.
+  </p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 680 312" class="font-sans" role="img" aria-label="Replicación directa entre los nodos B y C y línea de tiempo de un failover medido">
+      <defs>
+        <marker id="r-ch" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="10" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-brand-600"/></marker>
+        <marker id="r-dir" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="10" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-brand-400"/></marker>
+      </defs>
+
+      <!-- Nodo B (seguidor) -->
+      <g transform="translate(0,12)">
+        <rect class="s-box" x="0.75" y="0.75" width="188.5" height="164.5" rx="6"/>
+        <path class="s-foot" d="M1.5,144 H188.5 V159.25 a5.25,5.25 0 0 1 -5.25,5.25 H6.75 a5.25,5.25 0 0 1 -5.25,-5.25 Z"/>
+        <line class="s-rule" x1="1.5" y1="144" x2="188.5" y2="144"/>
+        <path class="s-head" d="M1.5,26 V6.75 a5.25,5.25 0 0 1 5.25,-5.25 H183.25 a5.25,5.25 0 0 1 5.25,5.25 V26 Z"/>
+        <text class="s-ttl" x="12" y="17.5">NODO B</text>
+        <text class="s-ttl" x="178" y="17.5" text-anchor="end">:8002</text>
+        <text class="s-dim" x="12" y="50">rol</text><text class="s-val" x="178" y="50" text-anchor="end">seguidor</text>
+        <line class="s-rule" x1="12" y1="58" x2="178" y2="58"/>
+        <text class="s-dim" x="12" y="75">época</text><text class="s-val" x="178" y="75" text-anchor="end">2</text>
+        <line class="s-rule" x1="12" y1="83" x2="178" y2="83"/>
+        <text class="s-dim" x="12" y="100">vigila</text><text class="s-val" x="178" y="100" text-anchor="end">10 latidos</text>
+        <line class="s-rule" x1="12" y1="108" x2="178" y2="108"/>
+        <text class="s-dim" x="12" y="125">réplica</text><text class="s-val" x="178" y="125" text-anchor="end">cada 1 s</text>
+        <text class="s-mono" x="12" y="158.5">nodo_b.sqlite</text>
+      </g>
+
+      <!-- Nodo C (líder) -->
+      <g transform="translate(490,12)">
+        <rect class="s-box" x="0.75" y="0.75" width="188.5" height="164.5" rx="6"/>
+        <path class="s-foot" d="M1.5,144 H188.5 V159.25 a5.25,5.25 0 0 1 -5.25,5.25 H6.75 a5.25,5.25 0 0 1 -5.25,-5.25 Z"/>
+        <line class="s-rule" x1="1.5" y1="144" x2="188.5" y2="144"/>
+        <path class="s-head" d="M1.5,26 V6.75 a5.25,5.25 0 0 1 5.25,-5.25 H183.25 a5.25,5.25 0 0 1 5.25,5.25 V26 Z"/>
+        <text class="s-ttl" x="12" y="17.5">NODO C</text>
+        <text class="s-ttl" x="178" y="17.5" text-anchor="end">:8003</text>
+        <text class="s-dim" x="12" y="50">rol</text><text class="s-val" x="178" y="50" text-anchor="end">líder</text>
+        <line class="s-rule" x1="12" y1="58" x2="178" y2="58"/>
+        <text class="s-dim" x="12" y="75">época</text><text class="s-val" x="178" y="75" text-anchor="end">2</text>
+        <line class="s-rule" x1="12" y1="83" x2="178" y2="83"/>
+        <text class="s-dim" x="12" y="100">emite</text><text class="s-val" x="178" y="100" text-anchor="end">latido cada 1 s</text>
+        <line class="s-rule" x1="12" y1="108" x2="178" y2="108"/>
+        <text class="s-dim" x="12" y="125">escribe</text><text class="s-val" x="178" y="125" text-anchor="end">decisiones y alertas</text>
+        <text class="s-mono" x="12" y="158.5">nodo_c.sqlite</text>
+      </g>
+
+      <!-- Flujos directos -->
+      <text class="s-ttl-dark" x="340" y="46" text-anchor="middle">Latido · cada 1 s</text>
+      <text class="s-mono" x="340" y="58" text-anchor="middle">POST /api/latido</text>
+      <line class="s-ln" x1="490" y1="66" x2="190" y2="66" marker-end="url(#r-ch)"/>
+
+      <text class="s-ttl-dark" x="340" y="94" text-anchor="middle">Réplica del cuaderno · lotes de 500</text>
+      <text class="s-mono" x="340" y="106" text-anchor="middle">GET /api/eventos</text>
+      <line class="s-ln" x1="490" y1="114" x2="190" y2="114" marker-end="url(#r-ch)"/>
+
+      <text class="s-ttl-dark" x="340" y="142" text-anchor="middle">Unión al reincorporarse · lotes de 200</text>
+      <text class="s-mono" x="340" y="154" text-anchor="middle">POST /api/eventos/lote</text>
+      <line class="s-ln-dir" x1="190" y1="162" x2="490" y2="162" marker-end="url(#r-dir)"/>
+
+      <!-- Línea de tiempo del failover -->
+      <g transform="translate(0,206)">
+        <rect class="fill-brand-50 stroke-line" x="0.5" y="0.5" width="679" height="104" rx="6"/>
+        <text class="s-lbl" x="16" y="24">FAILOVER MEDIDO EN EJECUCIÓN</text>
+        <line class="stroke-brand-400 stroke-[1.6]" x1="100" y1="56" x2="580" y2="56"/>
+        <circle class="fill-brand-600" cx="100" cy="56" r="5.5"/>
+        <circle class="fill-brand-600" cx="340" cy="56" r="5.5"/>
+        <circle class="fill-brand-600" cx="580" cy="56" r="5.5"/>
+        <text class="s-dim" x="220" y="49" text-anchor="middle">+10,3 s</text>
+        <text class="s-dim" x="460" y="49" text-anchor="middle">+23,1 s</text>
+        <text class="s-val" x="100" y="78" text-anchor="middle">05:14:10.004Z</text>
+        <text class="s-txt" x="100" y="92" text-anchor="middle">último latido de B</text>
+        <text class="s-val" x="340" y="78" text-anchor="middle">05:14:20.283Z</text>
+        <text class="s-txt" x="340" y="92" text-anchor="middle">C asume en la época 2</text>
+        <text class="s-val" x="580" y="78" text-anchor="middle">05:14:43.382Z</text>
+        <text class="s-txt" x="580" y="92" text-anchor="middle">B se une: 8 insertados · 0 ignorados</text>
+      </g>
+    </svg>
+    <figcaption>
+      <b>Fig. 2</b> — Replicación directa entre B y C, sin pasar por el canal. El latido lo emite
+      solo el líder; el seguidor pide los eventos que le faltan y, al reincorporarse, un nodo
+      envía al líder lo que solo él tiene. Un <code>409 epoca_vieja</code> indica que otro nodo
+      ya asumió una época mayor.
+      <span class="src">Fuente: app/Agents/A5/Resiliencia.php:15-23,86-112,212-253 · app/Node/B/ControlController.php:31-96 · config/sard.php:57-59</span>
+    </figcaption>
+  </figure>
+</div>
+</section>
+
+
+<!-- ==================== 02 AGENTES ==================== -->
+<section class="doc-section [break-before:page]">
+  <h2><span class="sec-num">02</span>Distribución de agentes</h2>
+
+  <p>
+    SARD tiene <strong>seis agentes (A1 a A6)</strong>. Son módulos del mismo código Laravel,
+    no procesos aparte: cada proceso carga solo los que corresponden a su rol y los
+    ejecuta con los trabajadores que lanza <span class="path">scripts/start.ps1</span>. A1, A2,
+    A3 y A6 corren únicamente en el nodo que es líder; A5 corre en B y C; A4, en el nodo A.
+    D y el CANAL no ejecutan agentes.
+  </p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 680 356" class="font-sans" role="img" aria-label="Distribución de los agentes A1 a A6 en los procesos A, CANAL, B, C y D">
+      <g transform="translate(0,0)">
+        <rect class="s-box" x="0.75" y="0.75" width="126.5" height="316.5" rx="6"/>
+        <path class="s-head" d="M1.5,26 V6.75 a5.25,5.25 0 0 1 5.25,-5.25 H121.25 a5.25,5.25 0 0 1 5.25,5.25 V26 Z"/>
+        <text class="s-ttl" x="10" y="17.5">NODO A</text>
+        <text class="s-ttl" x="118" y="17.5" text-anchor="end">:8001</text>
+        <text class="s-lbl" x="10" y="44">AGENTES</text>
+        <rect class="s-box-soft" x="8" y="52" width="112" height="26" rx="5"/>
+        <text class="s-chip" x="14" y="68.5">A4 · Comunicación</text><text class="s-dim" x="10" y="98">Ordena por puntaje</text><text class="s-dim" x="10" y="111">y reintenta con</text><text class="s-dim" x="10" y="124">backoff hasta el ACK</text><line class="s-rule" x1="10" y1="234" x2="118" y2="234"/>
+        <text class="s-lbl" x="10" y="250">PROCESOS</text><text class="s-mono" x="10" y="266">sard:a4</text>
+      </g>
+      <g transform="translate(138,0)">
+        <rect class="s-box-dash" x="0.75" y="0.75" width="126.5" height="316.5" rx="6"/>
+        <path class="s-head-alt" d="M1.5,26 V6.75 a5.25,5.25 0 0 1 5.25,-5.25 H121.25 a5.25,5.25 0 0 1 5.25,5.25 V26 Z"/>
+        <text class="s-ttl" x="10" y="17.5">CANAL</text>
+        <text class="s-ttl" x="118" y="17.5" text-anchor="end">:8010</text>
+        <text class="s-lbl" x="10" y="44">AGENTES</text><text class="s-dim" x="10" y="68">No ejecuta agentes:</text><text class="s-dim" x="10" y="81">solo transporta y</text><text class="s-dim" x="10" y="94">simula la red</text><line class="s-rule" x1="10" y1="234" x2="118" y2="234"/>
+        <text class="s-lbl" x="10" y="250">PROCESOS</text><text class="s-mono" x="10" y="266">sard:canal</text>
+      </g>
+      <g transform="translate(276,0)">
+        <rect class="s-box" x="0.75" y="0.75" width="126.5" height="316.5" rx="6"/>
+        <path class="s-head" d="M1.5,26 V6.75 a5.25,5.25 0 0 1 5.25,-5.25 H121.25 a5.25,5.25 0 0 1 5.25,5.25 V26 Z"/>
+        <text class="s-ttl" x="10" y="17.5">NODO B</text>
+        <text class="s-ttl" x="118" y="17.5" text-anchor="end">:8002</text>
+        <text class="s-lbl" x="10" y="44">AGENTES</text>
+        <rect class="s-box-soft" x="8" y="52" width="112" height="26" rx="5"/>
+        <text class="s-chip" x="14" y="68.5">A5 · Resiliencia</text><rect class="s-box-dash" x="4" y="88" width="120" height="140" rx="5"/>
+        <text class="s-lbl" x="12" y="103">SOLO EL LÍDER</text>
+        <rect class="s-box-soft" x="8" y="112" width="112" height="24" rx="5"/>
+        <text class="s-chip" x="14" y="127.5">A1 · Recepción</text>
+        <rect class="s-box-soft" x="8" y="140" width="112" height="24" rx="5"/>
+        <text class="s-chip" x="14" y="155.5">A2 · Triaje</text>
+        <circle class="fill-brand-500" cx="112" cy="152" r="3.5"/>
+        <rect class="s-box-soft" x="8" y="168" width="112" height="24" rx="5"/>
+        <text class="s-chip" x="14" y="183.5">A3 · Correlación</text>
+        <rect class="s-box-soft" x="8" y="196" width="112" height="24" rx="5"/>
+        <text class="s-chip" x="14" y="211.5">A6 · Coordinación</text>
+        <circle class="fill-brand-500" cx="112" cy="208" r="3.5"/><line class="s-rule" x1="10" y1="234" x2="118" y2="234"/>
+        <text class="s-lbl" x="10" y="250">PROCESOS</text><text class="s-mono" x="10" y="266">queue:work</text><text class="s-mono" x="10" y="280">sard:a5</text><text class="s-mono" x="10" y="294">sard:replicar</text><text class="s-mono" x="10" y="308">sard:alertas</text>
+      </g>
+      <g transform="translate(414,0)">
+        <rect class="s-box" x="0.75" y="0.75" width="126.5" height="316.5" rx="6"/>
+        <path class="s-head" d="M1.5,26 V6.75 a5.25,5.25 0 0 1 5.25,-5.25 H121.25 a5.25,5.25 0 0 1 5.25,5.25 V26 Z"/>
+        <text class="s-ttl" x="10" y="17.5">NODO C</text>
+        <text class="s-ttl" x="118" y="17.5" text-anchor="end">:8003</text>
+        <text class="s-lbl" x="10" y="44">AGENTES</text>
+        <rect class="s-box-soft" x="8" y="52" width="112" height="26" rx="5"/>
+        <text class="s-chip" x="14" y="68.5">A5 · Resiliencia</text><rect class="s-box-dash" x="4" y="88" width="120" height="140" rx="5"/>
+        <text class="s-lbl" x="12" y="103">SOLO EL LÍDER</text>
+        <rect class="s-box-soft" x="8" y="112" width="112" height="24" rx="5"/>
+        <text class="s-chip" x="14" y="127.5">A1 · Recepción</text>
+        <rect class="s-box-soft" x="8" y="140" width="112" height="24" rx="5"/>
+        <text class="s-chip" x="14" y="155.5">A2 · Triaje</text>
+        <circle class="fill-brand-500" cx="112" cy="152" r="3.5"/>
+        <rect class="s-box-soft" x="8" y="168" width="112" height="24" rx="5"/>
+        <text class="s-chip" x="14" y="183.5">A3 · Correlación</text>
+        <rect class="s-box-soft" x="8" y="196" width="112" height="24" rx="5"/>
+        <text class="s-chip" x="14" y="211.5">A6 · Coordinación</text>
+        <circle class="fill-brand-500" cx="112" cy="208" r="3.5"/><line class="s-rule" x1="10" y1="234" x2="118" y2="234"/>
+        <text class="s-lbl" x="10" y="250">PROCESOS</text><text class="s-mono" x="10" y="266">queue:work</text><text class="s-mono" x="10" y="280">sard:a5</text><text class="s-mono" x="10" y="294">sard:replicar</text><text class="s-mono" x="10" y="308">sard:alertas</text>
+      </g>
+      <g transform="translate(552,0)">
+        <rect class="s-box" x="0.75" y="0.75" width="126.5" height="316.5" rx="6"/>
+        <path class="s-head" d="M1.5,26 V6.75 a5.25,5.25 0 0 1 5.25,-5.25 H121.25 a5.25,5.25 0 0 1 5.25,5.25 V26 Z"/>
+        <text class="s-ttl" x="10" y="17.5">NODO D</text>
+        <text class="s-ttl" x="118" y="17.5" text-anchor="end">:8004</text>
+        <text class="s-lbl" x="10" y="44">AGENTES</text><text class="s-dim" x="10" y="68">No ejecuta agentes:</text><text class="s-dim" x="10" y="81">recibe alertas y</text><text class="s-dim" x="10" y="94">acusa recibo</text><line class="s-rule" x1="10" y1="234" x2="118" y2="234"/>
+        <text class="s-lbl" x="10" y="250">PROCESOS</text><text class="s-mono" x="10" y="266">sard:campo</text>
+      </g>
+      <line class="s-rule" x1="0" y1="330" x2="680" y2="330"/>
+      <circle class="fill-brand-500" cx="6" cy="344" r="3.5"/>
+      <text class="s-dim" x="16" y="347.5">consulta un LLM opcional (apagado por defecto)</text>
+      <rect class="s-box-dash" x="300" y="338" width="22" height="12" rx="2"/>
+      <text class="s-dim" x="330" y="347.5">solo el nodo que es líder los ejecuta</text>
+    </svg>
+    <figcaption>
+      <b>Fig. 3</b> — Agentes por proceso y trabajadores que los ejecutan. B y C cargan los
+      mismos agentes; el seguidor no los ejecuta, solo replica el cuaderno y proyecta.
+      <span class="src">Fuente: scripts/start.ps1:44-57 · app/Agents/ · app/Jobs/ProcesarReporte.php:27-57</span>
+    </figcaption>
+  </figure>
+
+  <div class="tbl-wrap long">
+    <div class="tbl-title"><span class="tnum">Tabla 2</span>Responsabilidades de cada agente<span class="tref">app/Agents/</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th scope="col" class="w-[27mm]">Agente</th>
+          <th scope="col" class="w-[20mm]">Corre en</th>
+          <th scope="col">Qué hace</th>
+          <th scope="col" class="w-[36mm]">Entrada → salida</th>
+          <th scope="col" class="w-[30mm]">LLM</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="k"><span class="tag">A1</span> Recepción</td><td>líder</td><td>Normaliza el reporte decodificado sin inventar datos: sin GPS queda «sin ubicación», 0 personas es «desconocido», el texto dañado se conserva truncado</td><td class="dim">payload decodificado → <code>ReporteNormalizado</code></td><td class="dim">no</td></tr>
+        <tr><td class="k"><span class="tag">A2</span> Triaje</td><td>líder</td><td>Asigna prioridad P1 a P4 con puntaje, señales e incertidumbre. Nada se descarta por prioridad</td><td class="dim"><code>ReporteNormalizado</code> → <code>TriajeAsignado</code></td><td class="dim">opcional: solo puede subir la prioridad</td></tr>
+        <tr><td class="k"><span class="tag">A3</span> Correlación</td><td>líder</td><td>Agrupa reportes cercanos en espacio y tiempo (DBSCAN incremental: 300 m, 30 min, mismo tipo o bandera común) y declara incidente masivo desde 5 dispositivos distintos. Nunca fusiona ni borra originales</td><td class="dim"><code>TriajeAsignado</code> → <code>IncidenteAgrupado</code></td><td class="dim">no</td></tr>
+        <tr><td class="k"><span class="tag">A4</span> Comunicación</td><td>nodo A</td><td>Decide qué reporte sale primero (mayor puntaje, menos bytes), envía lotes de 10 por el canal y reintenta con espera creciente hasta el ACK</td><td class="dim"><code>cola_salida</code> → mensajes al canal</td><td class="dim">no</td></tr>
+        <tr><td class="k"><span class="tag">A5</span> Resiliencia</td><td>B y C</td><td>Emite y vigila latidos, asume el mando si el líder calla, avisa a A y D, reanuda lo pendiente y une cuadernos al regresar un nodo</td><td class="dim">latidos → <code>LiderAsumido</code>, <code>NodoReunido</code></td><td class="dim">no</td></tr>
+        <tr><td class="k"><span class="tag">A6</span> Coordinación</td><td>líder</td><td>Propone una acción por incidente con plantillas y envía a D las alertas ya aprobadas, con reintento hasta el acuse. No despacha sin decisión humana</td><td class="dim">incidente → <code>RecomendacionPropuesta</code>; <code>DecisionHumana</code> → <code>AlertaCampoEnviada</code></td><td class="dim">opcional: solo redacta la justificación</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <h3>02.1 Orden de ejecución en el líder</h3>
+  <p>
+    A1 se ejecuta al recibir el reporte por el canal. Después, un trabajo de la cola de
+    Laravel (<code>ProcesarReporte</code>) ejecuta A2, A3 y A6 en ese orden. El trabajo es
+    idempotente: si el reporte ya tiene triaje o incidente, no repite esos eventos. Si el
+    líder cae a mitad de camino, A5 en el nuevo líder reencola lo que quedó sin terminar.
+  </p>
+
+  <div class="note">
+    <b>Uso de modelos de lenguaje.</b> Solo A2 y A6 pueden consultar un LLM, y solo con
+    <code>LLM_HABILITADO</code> (apagado por defecto). A2 únicamente puede subir una prioridad,
+    nunca bajarla ni descartar; A6 únicamente redacta la justificación, sin cambiar la unidad
+    ni la acción. Si el modelo falla, el sistema sigue por reglas.
+    <span class="src">Fuente: app/Agents/A2/ElevacionLlm.php:9-14 · app/Agents/A6/RedaccionLlm.php:7-11 · config/sard.php:62,72-81</span>
+  </div>
+</section>
+
+<!-- ==================== 03 FLUJOS ==================== -->
+<section class="doc-section [break-before:page]">
+  <h2><span class="sec-num">03</span>Flujos de mensajes</h2>
+
+  <p>
+    El recorrido completo de un reporte tiene nueve pasos, desde que el ciudadano lo envía
+    hasta que el equipo de campo acusa recibo de la alerta. Las flechas oscuras viajan por el
+    canal simulado y pueden perderse, retrasarse o desordenarse; las claras son HTTP directo.
+  </p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 680 372" class="font-sans" role="img" aria-label="Diagrama de secuencia del flujo completo, desde el reporte ciudadano hasta el acuse de campo">
+      <defs>
+        <marker id="f-a" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="10" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-brand-600"/></marker>
+        <marker id="f-b" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="10" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-brand-400"/></marker>
+      </defs><line class="s-life" x1="60" y1="28" x2="60" y2="364"/><line class="s-life" x1="200" y1="28" x2="200" y2="364"/><line class="s-life" x1="340" y1="28" x2="340" y2="364"/><line class="s-life" x1="480" y1="28" x2="480" y2="364"/><line class="s-life" x1="620" y1="28" x2="620" y2="364"/><rect class="s-head-alt" x="10" y="0" width="100" height="28" rx="5"/>
+      <text class="s-ttl" x="60" y="18" text-anchor="middle">PWA</text><rect class="s-head" x="150" y="0" width="100" height="28" rx="5"/>
+      <text class="s-ttl" x="200" y="18" text-anchor="middle">Nodo A</text><rect class="s-head" x="290" y="0" width="100" height="28" rx="5"/>
+      <text class="s-ttl" x="340" y="18" text-anchor="middle">Líder (B o C)</text><rect class="s-head-alt" x="430" y="0" width="100" height="28" rx="5"/>
+      <text class="s-ttl" x="480" y="18" text-anchor="middle">Operador</text><rect class="s-head" x="570" y="0" width="100" height="28" rx="5"/>
+      <text class="s-ttl" x="620" y="18" text-anchor="middle">Nodo D</text>
+      <line class="s-ln-dir" x1="60" y1="62" x2="200" y2="62" marker-end="url(#f-b)"/>
+      <text class="s-txt s-halo" x="90" y="56" text-anchor="start">reporte binario</text>
+      <text class="s-txt" x="90" y="56" text-anchor="start">reporte binario</text>
+      <circle class="s-badge" cx="76" cy="62" r="8"/><text class="s-badge-t" x="76" y="65.5" text-anchor="middle">1</text>
+      <line class="s-ln-ret" x1="200" y1="94" x2="60" y2="94" marker-end="url(#f-b)"/>
+      <text class="s-txt s-halo" x="170" y="88" text-anchor="end">ACK de 17 B</text>
+      <text class="s-txt" x="170" y="88" text-anchor="end">ACK de 17 B</text>
+      <circle class="s-badge" cx="184" cy="94" r="8"/><text class="s-badge-t" x="184" y="97.5" text-anchor="middle">2</text>
+      <line class="s-ln" x1="200" y1="128" x2="340" y2="128" marker-end="url(#f-a)"/>
+      <text class="s-txt s-halo" x="230" y="122" text-anchor="start">reporte por el canal</text>
+      <text class="s-txt" x="230" y="122" text-anchor="start">reporte por el canal</text>
+      <circle class="s-badge" cx="216" cy="128" r="8"/><text class="s-badge-t" x="216" y="131.5" text-anchor="middle">3</text><rect class="s-box-soft" x="270" y="142" width="140" height="26" rx="5"/>
+      <circle class="s-badge" cx="270" cy="155" r="8"/><text class="s-badge-t" x="270" y="158.5" text-anchor="middle">4</text>
+      <text class="s-chip" x="340" y="159" text-anchor="middle">A1 · A2 · A3 · A6</text>
+      <line class="s-ln" x1="340" y1="202" x2="200" y2="202" marker-end="url(#f-a)"/>
+      <text class="s-txt s-halo" x="310" y="196" text-anchor="end">ACK del líder</text>
+      <text class="s-txt" x="310" y="196" text-anchor="end">ACK del líder</text>
+      <circle class="s-badge" cx="324" cy="202" r="8"/><text class="s-badge-t" x="324" y="205.5" text-anchor="middle">5</text>
+      <line class="s-ln-dir" x1="480" y1="240" x2="340" y2="240" marker-end="url(#f-b)"/>
+      <text class="s-txt s-halo" x="450" y="234" text-anchor="end">decisión humana</text>
+      <text class="s-txt" x="450" y="234" text-anchor="end">decisión humana</text>
+      <circle class="s-badge" cx="464" cy="240" r="8"/><text class="s-badge-t" x="464" y="243.5" text-anchor="middle">6</text>
+      <line class="s-ln" x1="340" y1="278" x2="620" y2="278" marker-end="url(#f-a)"/>
+      <text class="s-txt s-halo" x="370" y="272" text-anchor="start">alerta aprobada</text>
+      <text class="s-txt" x="370" y="272" text-anchor="start">alerta aprobada</text>
+      <circle class="s-badge" cx="356" cy="278" r="8"/><text class="s-badge-t" x="356" y="281.5" text-anchor="middle">7</text>
+      <line class="s-ln" x1="620" y1="314" x2="340" y2="314" marker-end="url(#f-a)"/>
+      <text class="s-txt s-halo" x="590" y="308" text-anchor="end">acuse de campo</text>
+      <text class="s-txt" x="590" y="308" text-anchor="end">acuse de campo</text>
+      <circle class="s-badge" cx="604" cy="314" r="8"/><text class="s-badge-t" x="604" y="317.5" text-anchor="middle">8</text>
+      <line class="s-ln" x1="340" y1="350" x2="620" y2="350" marker-end="url(#f-a)"/>
+      <text class="s-txt s-halo" x="370" y="344" text-anchor="start">acuse registrado</text>
+      <text class="s-txt" x="370" y="344" text-anchor="start">acuse registrado</text>
+      <circle class="s-badge" cx="356" cy="350" r="8"/><text class="s-badge-t" x="356" y="353.5" text-anchor="middle">9</text>
+    </svg>
+    <figcaption>
+      <b>Fig. 4</b> — Flujo de extremo a extremo. El paso 4 agrupa lo que el líder hace por
+      dentro con los agentes A1, A2, A3 y A6. Cada paso se detalla en la Tabla 3.
+      <span class="src">Fuente: app/Node/A/ReportesController.php · app/Agents/A4/Comunicacion.php · app/Node/B/EntregaController.php · app/Agents/A6/EnvioAlertas.php</span>
+    </figcaption>
+  </figure>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 3</span>Mensajes del flujo principal<span class="tref">routes/api.php:35-81</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th scope="col" class="r w-[11mm]">Paso</th>
+          <th scope="col" class="w-[48mm]">Mensaje</th>
+          <th scope="col" class="w-[28mm]">Origen → destino</th>
+          <th scope="col" class="w-[16mm]">Vía</th>
+          <th scope="col">Efecto</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="num">1</td><td class="mono">POST /api/reportes</td><td>PWA → A</td><td class="dim">directo</td><td>A valida el CRC, guarda <code>ReporteRecibido</code> y encola el reporte en <code>cola_salida</code></td></tr>
+        <tr><td class="num">2</td><td class="mono">ACK · 0x41 + UUID</td><td>A → PWA</td><td class="dim">directo</td><td>Confirma la recepción en A; un reporte repetido recibe el mismo ACK</td></tr>
+        <tr><td class="num">3</td><td class="mono">POST /api/entrega/reporte</td><td>A → líder</td><td class="dim">canal</td><td>A4 lo envía; el seguidor responde <span class="pill pill-code">409</span> <code>no_lider</code> y A reintenta</td></tr>
+        <tr><td class="num">4</td><td class="mono">eventos del cuaderno</td><td>dentro del líder</td><td class="dim">local</td><td><code>ReporteNormalizado</code>, <code>TriajeAsignado</code>, <code>IncidenteAgrupado</code> y <code>RecomendacionPropuesta</code></td></tr>
+        <tr><td class="num">5</td><td class="mono">POST /api/acks</td><td>líder → A</td><td class="dim">canal</td><td>A marca <code>confirmado_en</code> y deja de reintentar</td></tr>
+        <tr><td class="num">6</td><td class="mono">POST /api/decisiones</td><td>operador → líder</td><td class="dim">directo</td><td>Registra <code>DecisionHumana</code>; si aprueba, nace <code>AlertaCampoEnviada</code></td></tr>
+        <tr><td class="num">7</td><td class="mono">POST /api/entrega/alerta</td><td>líder → D</td><td class="dim">canal</td><td>D la guarda en <code>alertas_campo</code>; el líder reintenta hasta el acuse</td></tr>
+        <tr><td class="num">8</td><td class="mono">POST /api/entrega/ack-campo</td><td>D → líder</td><td class="dim">canal</td><td>El líder registra <code>AckCampo</code>; D reintenta hasta que se lo confirmen</td></tr>
+        <tr><td class="num">9</td><td class="mono">POST /api/entrega/ack-recibido</td><td>líder → D</td><td class="dim">canal</td><td>D marca el acuse como confirmado (<code>confirmado_en</code>)</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <h3>03.1 Mensajes fuera del flujo principal</h3>
+  <ul>
+    <li><strong>Control entre B y C</strong>, siempre directo: latido (<code>POST /api/latido</code>), réplica (<code>GET /api/eventos</code>) y unión (<code>POST /api/eventos/lote</code>), descritos en la sección 01.1.</li>
+    <li><strong>Anuncio de nuevo líder</strong> a A y D (<code>POST /api/lider</code>), directo, tras un failover.</li>
+    <li><strong>Consulta del tablero</strong> (<code>GET /api/tablero/estado</code>), que puede atender cualquier nodo B o C.</li>
+  </ul>
+  <p>
+    Todo mensaje que cruza el canal es idempotente: el UUID del reporte, de la alerta o del
+    acuse permite repetirlo sin duplicar efectos. El comportamiento del canal se detalla en la
+    sección 09.
+  </p>
+</section>
+
+<!-- ==================== 04 ALMACENAMIENTO ==================== -->
+<section class="doc-section [break-before:page]">
+  <h2><span class="sec-num">04</span>Almacenamiento</h2>
+
+  <p>
+    Cada proceso guarda sus datos en <strong>su propio archivo SQLite</strong>; no hay
+    servidor de base de datos. La fuente de verdad es el <strong>cuaderno de eventos</strong>
+    (<code>eventos</code>): un registro de solo añadir con hash encadenado. Las demás tablas
+    de negocio son <em>proyecciones</em> que el <code>Proyector</code> deriva de esos
+    eventos, de modo que se pueden reconstruir en cualquier momento.
+  </p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 680 548" class="font-sans" role="img" aria-label="Diagrama de almacenamiento: cuaderno de eventos, proyecciones derivadas y tablas operativas por rol">
+      <defs>
+        <marker id="s-a" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="10" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-brand-600"/></marker>
+        <marker id="s-b" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="10" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-brand-400"/></marker>
+      </defs><text class="s-lbl" x="0" y="12">CUADERNO DE EVENTOS · FUENTE DE VERDAD</text><line class="s-rule" x1="0" y1="19" x2="680" y2="19"/>
+      <g transform="translate(0,30)">
+        <rect class="s-tbl" x="0.6" y="0.6" width="428.8" height="86.8" rx="5"/>
+        <path class="s-th" d="M1.2,22 V6 a4.8,4.8 0 0 1 4.8,-4.8 H424 a4.8,4.8 0 0 1 4.8,4.8 V22 Z"/>
+        <text class="s-name" x="8" y="15.5">eventos</text>
+        <text class="s-dim text-[9px]" x="422" y="15.5" text-anchor="end">append-only · hash encadenado</text>
+        <text class="s-col" x="8" y="36"><tspan class="fill-brand-700 font-bold">PK</tspan> uuid</text>
+        <text class="s-col" x="8" y="49">nodo_origen + seq (único)</text>
+        <text class="s-col" x="8" y="62">epoca · tipo</text>
+        <text class="s-col" x="8" y="75">ref_uuid · creado_en</text>
+        <text class="s-col" x="222" y="36">hash_prev · hash (SHA-256)</text>
+        <text class="s-col" x="222" y="49">payload (JSON)</text>
+        <text class="s-col" x="222" y="62">triggers: sin UPDATE ni DELETE</text>
+      </g>
+      <g transform="translate(450,30)">
+        <rect class="s-tbl" x="0.6" y="0.6" width="228.8" height="80.8" rx="5"/>
+        <path class="s-th" d="M1.2,22 V6 a4.8,4.8 0 0 1 4.8,-4.8 H224 a4.8,4.8 0 0 1 4.8,4.8 V22 Z"/>
+        <text class="s-name" x="8" y="15.5">nodo_estado</text>
+        <text class="s-dim text-[9px]" x="222" y="15.5" text-anchor="end">clave / valor</text>
+        <text class="s-col" x="8" y="36"><tspan class="fill-brand-700 font-bold">PK</tspan> clave</text><text class="s-col" x="8" y="49">valor</text><text class="s-col" x="8" y="62">líder · época · último latido</text><text class="s-col" x="8" y="75">aislado · pendiente_union</text>
+      </g>
+      <line class="s-ln" x1="215" y1="118" x2="215" y2="168" marker-end="url(#s-a)"/>
+      <text class="s-mono" x="227" y="146">Proyector::aplicar(evento)</text>
+      <text class="s-dim" x="227" y="159">sard:reconstruir las regenera</text><text class="s-lbl" x="0" y="184">PROYECCIONES · DERIVADAS DEL CUADERNO</text><line class="s-rule" x1="0" y1="191" x2="680" y2="191"/>
+      <g transform="translate(0,202)">
+        <rect class="s-tbl" x="0.6" y="0.6" width="138.8" height="80.8" rx="5"/>
+        <path class="s-th" d="M1.2,22 V6 a4.8,4.8 0 0 1 4.8,-4.8 H134 a4.8,4.8 0 0 1 4.8,4.8 V22 Z"/>
+        <text class="s-name" x="8" y="15.5">triajes</text>
+        <text class="s-col" x="8" y="36"><tspan class="fill-brand-700 font-bold">PK</tspan> reporte_uuid</text><text class="s-col" x="8" y="49">prioridad · puntaje</text><text class="s-col" x="8" y="62">incertidumbre · modo</text><text class="s-col" x="8" y="75">senales · motivos</text>
+      </g>
+      <g transform="translate(180,202)">
+        <rect class="s-tbl" x="0.6" y="0.6" width="138.8" height="80.8" rx="5"/>
+        <path class="s-th" d="M1.2,22 V6 a4.8,4.8 0 0 1 4.8,-4.8 H134 a4.8,4.8 0 0 1 4.8,4.8 V22 Z"/>
+        <text class="s-name" x="8" y="15.5">reportes</text>
+        <text class="s-col" x="8" y="36"><tspan class="fill-brand-700 font-bold">PK</tspan> reporte_uuid</text><text class="s-col" x="8" y="49">device_id · banderas</text><text class="s-col" x="8" y="62">personas · texto</text><text class="s-col" x="8" y="75">lat · lon · creado_en</text>
+      </g>
+      <g transform="translate(360,202)">
+        <rect class="s-tbl" x="0.6" y="0.6" width="138.8" height="80.8" rx="5"/>
+        <path class="s-th" d="M1.2,22 V6 a4.8,4.8 0 0 1 4.8,-4.8 H134 a4.8,4.8 0 0 1 4.8,4.8 V22 Z"/>
+        <text class="s-name" x="8" y="15.5">incidente_reporte</text>
+        <text class="s-col" x="8" y="36"><tspan class="fill-brand-700 font-bold">PK</tspan> reporte_uuid</text><text class="s-col" x="8" y="49"><tspan class="fill-brand-700 font-bold">FK</tspan> incidente_uuid</text><text class="s-col" x="8" y="62">evento_uuid</text><text class="s-col" x="8" y="75">índice: incidente_uuid</text>
+      </g>
+      <g transform="translate(540,202)">
+        <rect class="s-tbl" x="0.6" y="0.6" width="138.8" height="80.8" rx="5"/>
+        <path class="s-th" d="M1.2,22 V6 a4.8,4.8 0 0 1 4.8,-4.8 H134 a4.8,4.8 0 0 1 4.8,4.8 V22 Z"/>
+        <text class="s-name" x="8" y="15.5">incidentes</text>
+        <text class="s-col" x="8" y="36"><tspan class="fill-brand-700 font-bold">PK</tspan> uuid</text><text class="s-col" x="8" y="49">lat · lon · masivo</text><text class="s-col" x="8" y="62">prioridad_base</text><text class="s-col" x="8" y="75">estado · confianza</text>
+      </g>
+      <g transform="translate(0,322)">
+        <rect class="s-tbl" x="0.6" y="0.6" width="138.8" height="80.8" rx="5"/>
+        <path class="s-th" d="M1.2,22 V6 a4.8,4.8 0 0 1 4.8,-4.8 H134 a4.8,4.8 0 0 1 4.8,4.8 V22 Z"/>
+        <text class="s-name" x="8" y="15.5">unidades_estado</text>
+        <text class="s-col" x="8" y="36"><tspan class="fill-brand-700 font-bold">PK</tspan> unidad_id</text><text class="s-col" x="8" y="49">estado</text><text class="s-col" x="8" y="62"><tspan class="fill-brand-700 font-bold">FK</tspan> alerta_uuid</text><text class="s-col" x="8" y="75"><tspan class="fill-brand-700 font-bold">FK</tspan> incidente_uuid</text>
+      </g>
+      <g transform="translate(180,322)">
+        <rect class="s-tbl" x="0.6" y="0.6" width="138.8" height="80.8" rx="5"/>
+        <path class="s-th" d="M1.2,22 V6 a4.8,4.8 0 0 1 4.8,-4.8 H134 a4.8,4.8 0 0 1 4.8,4.8 V22 Z"/>
+        <text class="s-name" x="8" y="15.5">alertas</text>
+        <text class="s-col" x="8" y="36"><tspan class="fill-brand-700 font-bold">PK</tspan> uuid</text><text class="s-col" x="8" y="49"><tspan class="fill-brand-700 font-bold">FK</tspan> decision_uuid</text><text class="s-col" x="8" y="62"><tspan class="fill-brand-700 font-bold">FK</tspan> incidente_uuid</text><text class="s-col" x="8" y="75">unidad_id · ack_en</text>
+      </g>
+      <g transform="translate(360,322)">
+        <rect class="s-tbl" x="0.6" y="0.6" width="138.8" height="80.8" rx="5"/>
+        <path class="s-th" d="M1.2,22 V6 a4.8,4.8 0 0 1 4.8,-4.8 H134 a4.8,4.8 0 0 1 4.8,4.8 V22 Z"/>
+        <text class="s-name" x="8" y="15.5">decisiones</text>
+        <text class="s-col" x="8" y="36"><tspan class="fill-brand-700 font-bold">PK</tspan> uuid</text><text class="s-col" x="8" y="49"><tspan class="fill-brand-700 font-bold">FK</tspan> recomendacion_uuid</text><text class="s-col" x="8" y="62"><tspan class="fill-brand-700 font-bold">FK</tspan> incidente_uuid</text><text class="s-col" x="8" y="75">accion · operador</text>
+      </g>
+      <g transform="translate(540,322)">
+        <rect class="s-tbl" x="0.6" y="0.6" width="138.8" height="80.8" rx="5"/>
+        <path class="s-th" d="M1.2,22 V6 a4.8,4.8 0 0 1 4.8,-4.8 H134 a4.8,4.8 0 0 1 4.8,4.8 V22 Z"/>
+        <text class="s-name" x="8" y="15.5">recomendaciones</text>
+        <text class="s-col" x="8" y="36"><tspan class="fill-brand-700 font-bold">PK</tspan> uuid</text><text class="s-col" x="8" y="49"><tspan class="fill-brand-700 font-bold">FK</tspan> incidente_uuid</text><text class="s-col" x="8" y="62">version · unidad_id</text><text class="s-col" x="8" y="75">accion · justificacion</text>
+      </g><line class="s-link" x1="140" y1="243" x2="180" y2="243"/><line class="s-link" x1="320" y1="243" x2="360" y2="243"/><line class="s-link" x1="500" y1="243" x2="540" y2="243"/><line class="s-link" x1="140" y1="363" x2="180" y2="363"/><line class="s-link" x1="320" y1="363" x2="360" y2="363"/><line class="s-link" x1="500" y1="363" x2="540" y2="363"/><line class="s-link" x1="610" y1="284" x2="610" y2="322" marker-end="url(#s-b)"/><text class="s-lbl" x="0" y="432">ESTADO OPERATIVO LOCAL · SEGÚN EL ROL DEL PROCESO</text><line class="s-rule" x1="0" y1="439" x2="680" y2="439"/>
+      <g transform="translate(0,450)">
+        <rect class="s-tbl" x="0.6" y="0.6" width="138.8" height="93.8" rx="5"/>
+        <path class="s-th" d="M1.2,22 V6 a4.8,4.8 0 0 1 4.8,-4.8 H134 a4.8,4.8 0 0 1 4.8,4.8 V22 Z"/>
+        <text class="s-name" x="8" y="15.5">cola_salida</text>
+        <text class="s-dim text-[9px]" x="132" y="15.5" text-anchor="end">Nodo A</text>
+        <text class="s-col" x="8" y="36"><tspan class="fill-brand-700 font-bold">PK</tspan> reporte_uuid</text><text class="s-col" x="8" y="49">payload · bytes</text><text class="s-col" x="8" y="62">puntaje_base · intentos</text><text class="s-col" x="8" y="75">proximo_intento</text><text class="s-col" x="8" y="88">confirmado_en · por</text>
+      </g>
+      <g transform="translate(180,450)">
+        <rect class="s-tbl" x="0.6" y="0.6" width="138.8" height="93.8" rx="5"/>
+        <path class="s-th" d="M1.2,22 V6 a4.8,4.8 0 0 1 4.8,-4.8 H134 a4.8,4.8 0 0 1 4.8,4.8 V22 Z"/>
+        <text class="s-name" x="8" y="15.5">mensajes</text>
+        <text class="s-dim text-[9px]" x="132" y="15.5" text-anchor="end">CANAL</text>
+        <text class="s-col" x="8" y="36"><tspan class="fill-brand-700 font-bold">PK</tspan> id · seq (único)</text><text class="s-col" x="8" y="49">origen · destino · ruta</text><text class="s-col" x="8" y="62">cuerpo · bytes · estado</text><text class="s-col" x="8" y="75">deliver_at · reordenado</text><text class="s-col" x="8" y="88">+ canal_parametros</text>
+      </g>
+      <g transform="translate(360,450)">
+        <rect class="s-tbl" x="0.6" y="0.6" width="138.8" height="93.8" rx="5"/>
+        <path class="s-th" d="M1.2,22 V6 a4.8,4.8 0 0 1 4.8,-4.8 H134 a4.8,4.8 0 0 1 4.8,4.8 V22 Z"/>
+        <text class="s-name" x="8" y="15.5">alertas_campo</text>
+        <text class="s-dim text-[9px]" x="132" y="15.5" text-anchor="end">Nodo D</text>
+        <text class="s-col" x="8" y="36"><tspan class="fill-brand-700 font-bold">PK</tspan> uuid</text><text class="s-col" x="8" y="49">incidente_uuid</text><text class="s-col" x="8" y="62">unidad_id · texto</text><text class="s-col" x="8" y="75">recibida_en · ack_en</text><text class="s-col" x="8" y="88">confirmado_en</text>
+      </g>
+      <g transform="translate(540,450)">
+        <rect class="s-tbl" x="0.6" y="0.6" width="138.8" height="93.8" rx="5"/>
+        <path class="s-th" d="M1.2,22 V6 a4.8,4.8 0 0 1 4.8,-4.8 H134 a4.8,4.8 0 0 1 4.8,4.8 V22 Z"/>
+        <text class="s-name" x="8" y="15.5">llm_cache</text>
+        <text class="s-dim text-[9px]" x="132" y="15.5" text-anchor="end">B · C</text>
+        <text class="s-col" x="8" y="36"><tspan class="fill-brand-700 font-bold">PK</tspan> clave</text><text class="s-col" x="8" y="49">proveedor · respuesta</text><text class="s-col" x="8" y="62">prioridad_reglas</text><text class="s-col" x="8" y="75">elevacion_a · origen</text><text class="s-col" x="8" y="88">+ jobs, cache (Laravel)</text>
+      </g>
+    </svg>
+    <figcaption>
+      <b>Fig. 5</b> — Esquema de almacenamiento. <code>PK</code> es clave primaria y
+      <code>FK</code> es referencia por UUID a otra tabla (SQLite no declara claves foráneas; la
+      relación la mantiene el Proyector). Los conectores unen las tablas relacionadas.
+      <span class="src">Fuente: database/migrations/ · app/Sard/Log/EventLog.php · app/Sard/Proyeccion/Proyector.php:20-39</span>
+    </figcaption>
+  </figure>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 4</span>Base de datos de cada proceso<span class="tref">scripts/start.ps1:51-57,71-85</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th scope="col" class="w-[22mm]">Proceso</th>
+          <th scope="col" class="w-[36mm]">Archivo</th>
+          <th scope="col">Qué guarda en la práctica</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="k">Nodo A</td><td class="mono">database/nodo_a.sqlite</td><td><code>eventos</code> (<code>ReporteRecibido</code>), <code>cola_salida</code> con el payload binario y el estado de cada reintento</td></tr>
+        <tr><td class="k">CANAL</td><td class="mono">database/canal.sqlite</td><td><code>mensajes</code> con su <code>deliver_at</code> y estado, y <code>canal_parametros</code> con los cambios en vivo</td></tr>
+        <tr><td class="k">Nodo B</td><td class="mono">database/nodo_b.sqlite</td><td>Cuaderno completo (propio y replicado), todas las proyecciones, <code>llm_cache</code></td></tr>
+        <tr><td class="k">Nodo C</td><td class="mono">database/nodo_c.sqlite</td><td>Igual que B; es la réplica que asume el mando si B cae</td></tr>
+        <tr><td class="k">Nodo D</td><td class="mono">database/nodo_d.sqlite</td><td><code>alertas_campo</code> con el estado del acuse y sus reintentos</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <p>
+    Todos los archivos comparten el mismo esquema, porque cada arranque ejecuta las
+    migraciones, y cada rol usa solo su parte. También contienen <code>nodo_estado</code>
+    (líder, época y último latido) y las tablas de Laravel para trabajos (<code>jobs</code>),
+    caché y sesiones.
+  </p>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 5</span>Eventos del cuaderno y su proyección<span class="tref">app/Sard/Proyeccion/Manejadores/</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th scope="col" class="w-[50mm]">Evento</th>
+          <th scope="col" class="w-[28mm]">Lo emite</th>
+          <th scope="col">Tablas que actualiza</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">ReporteRecibido</td><td>nodo A</td><td class="dim">ninguna: queda en el cuaderno de A</td></tr>
+        <tr><td class="mono">ReporteNormalizado</td><td>A1</td><td><code>reportes</code></td></tr>
+        <tr><td class="mono">TriajeAsignado</td><td>A2</td><td><code>triajes</code></td></tr>
+        <tr><td class="mono">PrioridadElevadaLLM</td><td>A2 (opcional)</td><td><code>triajes</code>, <code>incidente_reporte</code></td></tr>
+        <tr><td class="mono">IncidenteAgrupado</td><td>A3</td><td><code>incidentes</code>, <code>incidente_reporte</code></td></tr>
+        <tr><td class="mono">IncidenteMasivoDeclarado</td><td>A3</td><td><code>incidentes</code></td></tr>
+        <tr><td class="mono">RecomendacionPropuesta</td><td>A6</td><td><code>recomendaciones</code>, <code>incidentes</code></td></tr>
+        <tr><td class="mono">DecisionHumana</td><td>tablero</td><td><code>decisiones</code>, <code>incidentes</code></td></tr>
+        <tr><td class="mono">AlertaCampoEnviada</td><td>A6</td><td><code>alertas</code></td></tr>
+        <tr><td class="mono">AckCampo</td><td>líder</td><td><code>alertas</code></td></tr>
+        <tr><td class="mono">LiderAsumido · NodoReunido</td><td>A5</td><td class="dim">ninguna: auditoría del failover</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <h3>04.1 Garantías del almacenamiento</h3>
+  <ul>
+    <li><strong>Solo añadir.</strong> Dos triggers de SQLite abortan cualquier <code>UPDATE</code> o <code>DELETE</code> sobre <code>eventos</code>.</li>
+    <li><strong>Cadena de hash.</strong> Cada evento guarda <code>sha256(hash_prev|json canónico)</code>; <code>php artisan sard:verificar-log</code> la recorre y detecta cualquier alteración.</li>
+    <li><strong>Orden por origen.</strong> La pareja <code>(nodo_origen, seq)</code> es única, por lo que cada nodo numera sus propios eventos sin coordinarse con otro.</li>
+    <li><strong>Reconstrucción.</strong> <code>php artisan sard:reconstruir</code> vuelve a derivar todas las proyecciones desde el cuaderno.</li>
+    <li><strong>Réplica por UUID.</strong> La unión inserta los eventos que faltan e ignora los que ya existen, sin duplicar.</li>
+  </ul>
+</section>
+
+<!-- ==================== 05 DEPENDENCIAS ==================== -->
+<section class="doc-section [break-before:page]">
+  <h2><span class="sec-num">05</span>Dependencias</h2>
+
+  <p>
+    El prototipo se ejecuta con PHP, Laravel y SQLite. No requiere Redis, un broker de
+    mensajes, contenedores ni servicios en la nube. Lo único externo es la consulta opcional
+    a un modelo de lenguaje, apagada por defecto.
+  </p>
+
+  <figure class="fig">
+    <svg viewBox="0 0 680 436" class="font-sans" role="img" aria-label="Dependencias del sistema por capa: cliente, aplicación, datos, servicios externos opcionales y herramientas de construcción">
+      <defs>
+        <marker id="d-a" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="10" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-brand-600"/></marker>
+        <marker id="d-b" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="10" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-brand-400"/></marker>
+      </defs><text class="s-lbl" x="0" y="12">CLIENTE · NAVEGADOR DEL TELÉFONO O DEL OPERADOR</text><line class="s-rule" x1="0" y1="18" x2="680" y2="18"/>
+      <g transform="translate(0,26)">
+        <rect class="s-box-soft" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">PWA + service worker</text>
+        <text class="s-dim" x="10" y="34">cola offline y precaché</text>
+      </g>
+      <g transform="translate(173,26)">
+        <rect class="s-box-soft" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">IndexedDB</text>
+        <text class="s-dim" x="10" y="34">almacén local del reporte</text>
+      </g>
+      <g transform="translate(346,26)">
+        <rect class="s-box-soft" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">Alpine.js 3.17</text>
+        <text class="s-dim" x="10" y="34">interactividad del tablero</text>
+      </g>
+      <g transform="translate(519,26)">
+        <rect class="s-box-soft" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">Leaflet 1.9 + PMTiles</text>
+        <text class="s-dim" x="10" y="34">mapa con tiles locales</text>
+      </g><text class="s-lbl" x="0" y="102">APLICACIÓN · UN PROCESO POR ROL</text><line class="s-rule" x1="0" y1="108" x2="680" y2="108"/>
+      <g transform="translate(0,116)">
+        <rect class="s-box-soft" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">PHP ≥ 8.3</text>
+        <text class="s-dim" x="10" y="34">probado con 8.5.12</text>
+      </g>
+      <g transform="translate(173,116)">
+        <rect class="s-box-soft" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">Laravel 13.40</text>
+        <text class="s-dim" x="10" y="34">HTTP, colas y migraciones</text>
+      </g>
+      <g transform="translate(346,116)">
+        <rect class="s-box-soft" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">ext. sodium</text>
+        <text class="s-dim" x="10" y="34">firma Ed25519 (opcional)</text>
+      </g>
+      <g transform="translate(519,116)">
+        <rect class="s-box-soft" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">Cola «database»</text>
+        <text class="s-dim" x="10" y="34">trabajo ProcesarReporte</text>
+      </g><text class="s-lbl" x="0" y="192">DATOS · SIN SERVIDOR DE BASE DE DATOS</text><line class="s-rule" x1="0" y1="198" x2="680" y2="198"/>
+      <g transform="translate(0,206)">
+        <rect class="s-box-soft" x="0.6" y="0.6" width="332.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">SQLite · pdo_sqlite</text>
+        <text class="s-dim" x="10" y="34">un archivo por proceso</text>
+      </g>
+      <g transform="translate(346,206)">
+        <rect class="s-box-soft" x="0.6" y="0.6" width="332.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">manizales.pmtiles</text>
+        <text class="s-dim" x="10" y="34">mapa estático (4,7 MB)</text>
+      </g><text class="s-lbl" x="0" y="282">SERVICIOS EXTERNOS · OPCIONALES, APAGADOS POR DEFECTO</text><line class="s-rule" x1="0" y1="288" x2="680" y2="288"/>
+      <g transform="translate(0,296)">
+        <rect class="s-box-dash" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">Gemini (AI Studio)</text>
+        <text class="s-dim" x="10" y="34">LLM, proveedor 1</text>
+      </g>
+      <g transform="translate(173,296)">
+        <rect class="s-box-dash" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">OpenRouter</text>
+        <text class="s-dim" x="10" y="34">LLM, proveedor 2</text>
+      </g>
+      <g transform="translate(346,296)">
+        <rect class="s-box-dash" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">NVIDIA NIM</text>
+        <text class="s-dim" x="10" y="34">LLM, proveedor 3</text>
+      </g>
+      <g transform="translate(519,296)">
+        <rect class="s-box-dash" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">LLM_HABILITADO</text>
+        <text class="s-dim" x="10" y="34">solo con datos sintéticos</text>
+      </g><text class="s-lbl" x="0" y="372">CONSTRUCCIÓN Y PRUEBAS · NO FORMAN PARTE DEL TIEMPO DE EJECUCIÓN</text><line class="s-rule" x1="0" y1="378" x2="680" y2="378"/>
+      <g transform="translate(0,386)">
+        <rect class="s-box-soft" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">Vite 8 + Tailwind 4</text>
+        <text class="s-dim" x="10" y="34">compilan CSS y JS</text>
+      </g>
+      <g transform="translate(173,386)">
+        <rect class="s-box-soft" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">laravel-vite-plugin 3</text>
+        <text class="s-dim" x="10" y="34">integra Vite con Laravel</text>
+      </g>
+      <g transform="translate(346,386)">
+        <rect class="s-box-soft" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">PHPUnit 12</text>
+        <text class="s-dim" x="10" y="34">210 pruebas</text>
+      </g>
+      <g transform="translate(519,386)">
+        <rect class="s-box-soft" x="0.6" y="0.6" width="159.8" height="42.8" rx="5"/>
+        <text class="s-chip" x="10" y="19">Laravel Pint</text>
+        <text class="s-dim" x="10" y="34">formato del código PHP</text>
+      </g>
+      <line class="s-ln" x1="340" y1="72" x2="340" y2="104" marker-end="url(#d-a)"/><text class="s-mono" x="352" y="92">HTTP</text>
+      <line class="s-ln" x1="340" y1="162" x2="340" y2="194" marker-end="url(#d-a)"/><text class="s-mono" x="352" y="182">PDO · SQL</text>
+      <line class="s-ln-ret" x1="340" y1="252" x2="340" y2="284" marker-end="url(#d-b)" style="display:none"/>
+    </svg>
+    <figcaption>
+      <b>Fig. 6</b> — Dependencias por capa. Las flechas indican quién llama a quién en
+      tiempo de ejecución; la última capa solo interviene al construir y probar.
+      <span class="src">Fuente: composer.json · package.json · config/sard.php:62,72-81</span>
+    </figcaption>
+  </figure>
+
+  <div class="tbl-wrap long">
+    <div class="tbl-title"><span class="tnum">Tabla 6</span>Dependencias y versiones<span class="tref">composer.json · package.json</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th scope="col" class="w-[44mm]">Dependencia</th>
+          <th scope="col" class="w-[30mm]">Versión</th>
+          <th scope="col">Para qué se usa</th>
+          <th scope="col" class="w-[20mm]">Necesaria</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="grp"><td colspan="4">Ejecución del servidor</td></tr>
+        <tr><td class="mono">php</td><td class="mono">^8.3 (probado 8.5.12)</td><td>Lenguaje de todos los nodos</td><td class="dim">sí</td></tr>
+        <tr><td class="mono">laravel/framework</td><td class="mono">^13.17 (13.40.0)</td><td>HTTP, rutas, colas, migraciones y cliente HTTP</td><td class="dim">sí</td></tr>
+        <tr><td class="mono">SQLite · pdo_sqlite</td><td class="mono">incluido en PHP</td><td>Base de datos de cada proceso, cola de trabajos, caché y sesiones</td><td class="dim">sí</td></tr>
+        <tr><td class="mono">ext. sodium</td><td class="mono">incluida en PHP</td><td>Firma Ed25519 de lotes entre B y C</td><td class="dim">solo con <code>SARD_FIRMA</code></td></tr>
+        <tr class="grp"><td colspan="4">Cliente (navegador)</td></tr>
+        <tr><td class="mono">alpinejs</td><td class="mono">^3.17.5</td><td>Interactividad de PWA, tablero y campo</td><td class="dim">sí</td></tr>
+        <tr><td class="mono">leaflet</td><td class="mono">^1.9.4</td><td>Mapa del tablero</td><td class="dim">sí</td></tr>
+        <tr><td class="mono">protomaps-leaflet</td><td class="mono">^5.1.0</td><td>Dibuja los tiles vectoriales sobre Leaflet</td><td class="dim">sí</td></tr>
+        <tr><td class="mono">pmtiles</td><td class="mono">^3.2.1</td><td>Lee el archivo local <span class="path">public/tiles/manizales.pmtiles</span> sin servidor de mapas</td><td class="dim">sí</td></tr>
+        <tr class="grp"><td colspan="4">Servicios externos</td></tr>
+        <tr><td class="mono">Gemini · OpenRouter · NVIDIA NIM</td><td class="mono">API compatible con OpenAI</td><td>Cadena de tres proveedores para A2 y A6; las claves viven solo en <code>.env</code> y no se envía el <code>device_id</code></td><td class="dim">no</td></tr>
+        <tr class="grp"><td colspan="4">Construcción y pruebas</td></tr>
+        <tr><td class="mono">vite · laravel-vite-plugin</td><td class="mono">^8.0 · ^3.1</td><td>Compilan y versionan el JavaScript y el CSS en <span class="path">public/build</span></td><td class="dim">al construir</td></tr>
+        <tr><td class="mono">tailwindcss · @tailwindcss/vite</td><td class="mono">^4.0.0</td><td>Estilos de las pantallas</td><td class="dim">al construir</td></tr>
+        <tr><td class="mono">phpunit/phpunit</td><td class="mono">^12.5.12</td><td>210 pruebas con 2316 aserciones</td><td class="dim">pruebas</td></tr>
+        <tr><td class="mono">laravel/pint · mockery · faker</td><td class="mono">^1.27 · ^1.6 · ^1.23</td><td>Formato del código, dobles de prueba y datos sintéticos</td><td class="dim">desarrollo</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <p>
+    La fuente tipográfica de las pantallas (Instrument Sans) se descarga al construir y se sirve
+    desde <span class="path">public/build</span>, por lo que el sistema funciona sin acceso a internet.
+  </p>
+</section>
+
+<!-- ==================== 02 COMPONENTES ==================== -->
+<section class="doc-section">
+  <h2><span class="sec-num">06</span>Especificaciones de componentes</h2>
+
+  <h3>06.1 Superficie REST</h3>
+
+  <p>
+    No existe un API Gateway independiente: la capa HTTP de Laravel cumple esa función.
+    El acceso se resuelve por <strong>rol de proceso</strong> mediante middlewares, no por
+    identidad de usuario. Las rutas se agrupan por nodo en <span class="path">routes/api.php</span>.
+  </p>
+
+  <div class="tbl-wrap long">
+    <div class="tbl-title"><span class="tnum">Tabla 7</span>Endpoints REST por rol de nodo<span class="tref">routes/api.php:23-82</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th scope="col" class="w-[15mm]">Método</th>
+          <th scope="col" class="w-[45mm]">Ruta</th>
+          <th scope="col">Función</th>
+          <th scope="col" class="w-[33mm]">Acceso</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="grp"><td colspan="4">Todos los nodos</td></tr>
+        <tr><td><span class="pill pill-get">GET</span></td><td class="mono">/api/salud</td><td>Estado del nodo según su rol (A: cola pendiente; B y C: líder, época, último latido, seq_max)</td><td class="dim">sin middleware</td></tr>
+        <tr><td><span class="pill pill-post">POST</span></td><td class="mono">/api/lider</td><td>Un nuevo líder se anuncia ante A y D</td><td class="dim">rol A,D · fencing</td></tr>
+
+        <tr class="grp"><td colspan="4">Nodo A · :8001</td></tr>
+        <tr><td><span class="pill pill-post">POST</span></td><td class="mono">/api/reportes</td><td>Recibe el payload binario y responde el ACK de 17 B. <span class="pill pill-code">400</span> si es inválido, <span class="pill pill-code">413</span> si supera 176 B</td><td class="dim">solo A · fencing</td></tr>
+        <tr><td><span class="pill pill-post">POST</span></td><td class="mono">/api/acks</td><td>El líder confirma, por el canal, que recibió el reporte (idempotente)</td><td class="dim">solo A · fencing</td></tr>
+        <tr><td><span class="pill pill-get">GET</span></td><td class="mono">/api/metricas</td><td>Reportes recibidos y ahorro de bytes frente a JSON</td><td class="dim">solo A · fencing</td></tr>
+
+        <tr class="grp"><td colspan="4">Nodo D · :8004</td></tr>
+        <tr><td><span class="pill pill-get">GET</span></td><td class="mono">/api/campo/alertas</td><td>Alertas recibidas por el equipo de campo</td><td class="dim">rol D · fencing</td></tr>
+        <tr><td><span class="pill pill-post">POST</span></td><td class="mono">/api/campo/ack</td><td>El equipo de campo acusa recibo de una alerta</td><td class="dim">rol D · fencing</td></tr>
+        <tr><td><span class="pill pill-post">POST</span></td><td class="mono">/api/entrega/alerta</td><td>Alerta entregada por el canal</td><td class="dim">rol D · fencing</td></tr>
+        <tr><td><span class="pill pill-post">POST</span></td><td class="mono">/api/entrega/ack-recibido</td><td>El líder confirma, por el canal, que registró el acuse</td><td class="dim">rol D · fencing</td></tr>
+
+        <tr class="grp"><td colspan="4">CANAL · :8010</td></tr>
+        <tr><td><span class="pill pill-post">POST</span></td><td class="mono">/api/canal/enviar</td><td>Encola un mensaje en base64 y responde <span class="pill pill-code">202</span> con id y estado. <span class="pill pill-code">413</span> si supera la MTU de 200 B</td><td class="dim">rol CANAL</td></tr>
+        <tr><td><span class="pill pill-get">GET</span></td><td class="mono">/api/canal/estadisticas</td><td>Recibidos, perdidos, entregados, reordenados, fallidos y pérdida por salto</td><td class="dim">rol CANAL</td></tr>
+        <tr><td><span class="pill pill-post">POST</span></td><td class="mono">/api/canal/config</td><td>Cambia pérdida, ventanas y saltos en vivo. <span class="pill pill-code">403</span> sin <code>SARD_DEMO</code></td><td class="dim">rol CANAL</td></tr>
+
+        <tr class="grp"><td colspan="4">Nodos B y C · :8002 / :8003</td></tr>
+        <tr><td><span class="pill pill-post">POST</span></td><td class="mono">/api/entrega/reporte</td><td>El canal entrega un reporte de A. <span class="pill pill-code">409</span> <code>no_lider</code> si el nodo es seguidor</td><td class="dim">rol B,C · fencing</td></tr>
+        <tr><td><span class="pill pill-post">POST</span></td><td class="mono">/api/entrega/ack-campo</td><td>Acuse de campo recibido en el líder; el seguidor responde <span class="pill pill-code">409</span></td><td class="dim">rol B,C · fencing</td></tr>
+        <tr><td><span class="pill pill-get">GET</span></td><td class="mono">/api/tablero/estado</td><td>Cola priorizada, contadores, recursos y brechas</td><td class="dim">rol B,C · fencing</td></tr>
+        <tr><td><span class="pill pill-get">GET</span></td><td class="mono">/api/incidentes/{uuid}</td><td>Detalle del incidente con toda su evidencia</td><td class="dim">rol B,C · fencing</td></tr>
+        <tr><td><span class="pill pill-post">POST</span></td><td class="mono">/api/decisiones</td><td>Aprobar o descartar una recomendación. <span class="pill pill-code">409</span> <code>no_lider</code> en el seguidor</td><td class="dim">rol B,C · fencing</td></tr>
+        <tr><td><span class="pill pill-post">POST</span></td><td class="mono">/api/latido</td><td>Latido del líder. <span class="pill pill-code">409</span> si la época es vieja</td><td class="dim">rol B,C · fencing</td></tr>
+        <tr><td><span class="pill pill-get">GET</span></td><td class="mono">/api/lider</td><td>Quién lidera y en qué época</td><td class="dim">rol B,C · fencing</td></tr>
+        <tr><td><span class="pill pill-get">GET</span></td><td class="mono">/api/eventos</td><td>Eventos ordenados por (nodo, seq) desde un punto dado; base de la réplica</td><td class="dim">rol B,C · fencing</td></tr>
+        <tr><td><span class="pill pill-post">POST</span></td><td class="mono">/api/eventos/lote</td><td>Unión de cuadernos por UUID. <span class="pill pill-code">401</span> si la firma del lote no cuadra</td><td class="dim">rol B,C · fencing</td></tr>
+        <tr><td><span class="pill pill-post">POST</span></td><td class="mono">/api/reportes/faltantes</td><td>Cuáles de los UUID enviados (máximo 500) no están en este nodo</td><td class="dim">rol B,C · fencing</td></tr>
+        <tr><td><span class="pill pill-post">POST</span></td><td class="mono">/api/demo/aislar</td><td>Aísla o reactiva el nodo para demostrar el failover. Requiere <code>SARD_DEMO</code></td><td class="dim">rol B,C · fencing</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Restricción de rol.</b> <code>SoloNodoA</code> y <code>SoloRol</code> responden
+    <code>404</code> (no <code>403</code>) cuando el rol no corresponde, de modo que las
+    rutas de un rol no existen para los demás. El <code>fencing</code> responde
+    <code>409 epoca_vieja</code> si la cabecera <code>X-Sard-Epoca</code> trae una época
+    menor que la local.
+    <span class="src">Fuente: app/Http/Middleware/SoloNodoA.php:17-23 · SoloRol.php:17-23 · FencingMiddleware.php:18-29</span>
+  </div>
+
+  <h3>06.2 Superficie web</h3>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 8</span>Pantallas por nodo<span class="tref">routes/web.php:16-20</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th scope="col" class="w-[24mm]">Ruta</th>
+          <th scope="col" class="w-[22mm]">Nodo</th>
+          <th scope="col" class="w-[28mm]">Puerto</th>
+          <th scope="col" class="w-[30mm]">Acceso</th>
+          <th scope="col">Usuario y propósito</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">/pwa</td><td class="k">A</td><td class="mono">8001</td><td class="dim">solo A</td><td>Ciudadano: formulario mínimo y cola offline en el teléfono</td></tr>
+        <tr><td class="mono">/tablero</td><td class="k">B o C</td><td class="mono">8002 / 8003</td><td class="dim">rol B,C</td><td>Coordinador: cola priorizada, mapa, evidencia y decisión</td></tr>
+        <tr><td class="mono">/campo</td><td class="k">D</td><td class="mono">8004</td><td class="dim">rol D</td><td>Equipo de campo: lista de alertas y acuse de recibo</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 03 PAYLOAD ==================== -->
+<section class="doc-section [break-before:page]">
+  <h2><span class="sec-num">07</span>Payload binario v1</h2>
+
+  <p>
+    El reporte ciudadano viaja como un paquete binario de <strong>36 + n bytes</strong>
+    (n es el largo del texto, de 0 a 140). Se arma en el navegador con JavaScript y se
+    lee en el servidor con PHP; ambos codecs producen y aceptan exactamente los mismos
+    bytes. Todos los enteros son <em>big-endian</em>.
+  </p>
+
+  <div class="break-inside-avoid">
+    <figure class="fig">
+      <div class="bytemap" role="img" aria-label="Mapa de bytes del payload: versión, uuid, device_id, latitud, longitud, tipo, banderas, personas, largo_texto, texto y CRC">
+        <span class="off col-span-1">0</span><span class="off col-span-16">1</span>
+        <div class="cell c1 col-span-1" title="versión"><b>ver</b><i>1 B</i></div>
+        <div class="cell c2 col-span-16"><b>uuid</b><i>UUIDv7 · 16 B</i></div>
+
+        <span class="off col-span-4">17</span><span class="off col-span-4">21</span><span class="off col-span-4">25</span><span class="off col-span-1">29</span><span class="off col-span-2">30</span><span class="off col-span-1">32</span><span class="off col-span-1">33</span>
+        <div class="cell c1 col-span-4"><b>device_id</b><i>uint32 · 4 B</i></div>
+        <div class="cell c2 col-span-4"><b>lat</b><i>int32 · 4 B</i></div>
+        <div class="cell c1 col-span-4"><b>lon</b><i>int32 · 4 B</i></div>
+        <div class="cell c2 col-span-1" title="tipo"><b>tipo</b><i>1 B</i></div>
+        <div class="cell c1 col-span-2"><b>banderas</b><i>uint16 · 2 B</i></div>
+        <div class="cell c2 col-span-1" title="personas"><b>pers.</b><i>1 B</i></div>
+        <div class="cell c1 col-span-1" title="largo_texto"><b>long.</b><i>1 B</i></div>
+
+        <span class="off col-span-15">34</span><span class="off col-span-2">34+n</span>
+        <div class="cell c2 var col-span-15"><b>texto</b><i>UTF-8 · n bytes (0 a 140)</i></div>
+        <div class="cell crc col-span-2"><b>crc</b><i>2 B</i></div>
+      </div>
+      <figcaption>
+        <b>Fig. 7</b> — Mapa de bytes del payload. Cada columna es un byte y los números
+        sobre los campos son su offset. <code>ver</code>, <code>pers.</code> y
+        <code>long.</code> abrevian versión, personas y largo_texto.
+        <span class="src">Fuente: app/Protocol/PayloadReporte.php:7-29 · resources/js/protocol/payload.js:71-160</span>
+      </figcaption>
+    </figure>
+  </div>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 9</span>Campos del payload v1<span class="tref">PayloadReporte.php:7-29</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th scope="col" class="r w-[16mm]">Offset</th>
+          <th scope="col" class="r w-[14mm]">Bytes</th>
+          <th scope="col" class="w-[26mm]">Campo</th>
+          <th scope="col" class="w-[24mm]">Tipo</th>
+          <th scope="col">Regla</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="num mono">0</td><td class="num">1</td><td class="mono">versión</td><td class="dim">uint8</td><td>Siempre 1; otro valor se rechaza</td></tr>
+        <tr><td class="num mono">1</td><td class="num">16</td><td class="mono">uuid</td><td class="dim">UUIDv7</td><td>Canónico 8-4-4-4-12, versión 7 y variante RFC 4122</td></tr>
+        <tr><td class="num mono">17</td><td class="num">4</td><td class="mono">device_id</td><td class="dim">uint32</td><td>Anónimo, aleatorio por instalación</td></tr>
+        <tr><td class="num mono">21</td><td class="num">4</td><td class="mono">lat</td><td class="dim">int32</td><td>Grados × 10⁷; <code>0x7FFFFFFF</code> significa sin ubicación</td></tr>
+        <tr><td class="num mono">25</td><td class="num">4</td><td class="mono">lon</td><td class="dim">int32</td><td>Igual que <code>lat</code></td></tr>
+        <tr><td class="num mono">29</td><td class="num">1</td><td class="mono">tipo</td><td class="dim">uint8</td><td>0 a 7</td></tr>
+        <tr><td class="num mono">30</td><td class="num">2</td><td class="mono">banderas</td><td class="dim">uint16</td><td>Bits del catálogo de banderas</td></tr>
+        <tr><td class="num mono">32</td><td class="num">1</td><td class="mono">personas</td><td class="dim">uint8</td><td>0 a 255; 0 significa desconocido</td></tr>
+        <tr><td class="num mono">33</td><td class="num">1</td><td class="mono">largo_texto</td><td class="dim">uint8</td><td>0 a 140, medido en <strong>bytes</strong> UTF-8</td></tr>
+        <tr><td class="num mono">34</td><td class="num">n</td><td class="mono">texto</td><td class="dim">UTF-8</td><td>Como máximo 140 bytes; debe ser UTF-8 válido</td></tr>
+        <tr><td class="num mono">34+n</td><td class="num">2</td><td class="mono">crc</td><td class="dim">uint16</td><td>CRC-16/CCITT-FALSE sobre los bytes 0 a 33+n</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="kpi">
+    <div>
+      <dt>Mínimo</dt>
+      <dd>36 B<small>Reporte sin texto (<code>LARGO_MINIMO</code>)</small></dd>
+    </div>
+    <div>
+      <dt>Máximo</dt>
+      <dd>176 B<small>36 + 140 bytes de texto; el nodo A rechaza más con 413</small></dd>
+    </div>
+    <div>
+      <dt>ACK</dt>
+      <dd>17 B<small><code>0x41</code> seguido de los 16 bytes del UUID</small></dd>
+    </div>
+  </div>
+
+  <h3>07.1 Decisiones de diseño</h3>
+  <ul>
+    <li><strong>Enteros en lugar de decimales.</strong> La latitud y la longitud se guardan como grados × 10⁷ en un int32: −75,5002 se almacena como −755 002 000. Cuatro bytes alcanzan para ±180°.</li>
+    <li><strong>Un centinela para «sin ubicación».</strong> Se usa <code>0x7FFFFFFF</code>, el mayor int32. No sirve 0 (es un punto real en el mar) ni −1 (es una longitud válida).</li>
+    <li><strong>El texto se mide en bytes.</strong> «vía bloqueada por derrumbe» tiene 26 caracteres y 28 bytes. Contar caracteres dejaría pasar textos con acentos que desbordan el paquete.</li>
+  </ul>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 10</span>Tamaño frente a JSON<span class="tref">medido en ejecución</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th scope="col">Formato</th>
+          <th scope="col" class="r">Reporte de prueba</th>
+          <th scope="col" class="r">1616 reportes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="k">Binario v1</td><td class="num">78 B</td><td class="num">96 058 B</td></tr>
+        <tr><td class="k">JSON equivalente</td><td class="num">185 B</td><td class="num">299 304 B</td></tr>
+        <tr><td class="k">Diferencia</td><td class="num">2,4 veces</td><td class="num">3,1 veces</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <h3>07.2 Dos lenguajes, un solo formato</h3>
+  <p>
+    Tres fixtures congelados en <span class="path">tests/fixtures/</span> guardan el mismo
+    reporte codificado por PHP y por JavaScript en hexadecimal. Las pruebas de cada
+    lenguaje decodifican el fixture del otro y nunca lo regeneran: si un codec cambiara
+    un solo byte, la prueba fallaría en lugar de adaptarse.
+  </p>
+</section>
+
+<!-- ==================== 04 CRC ==================== -->
+<section class="doc-section">
+  <h2><span class="sec-num">08</span>CRC-16 y verificación</h2>
+
+  <p>
+    Los dos últimos bytes del payload son un CRC-16 que detecta <strong>corrupción
+    accidental</strong> durante el transporte. El nodo receptor lo recalcula sobre los
+    bytes 0 a 33+n y descarta el paquete si no coincide.
+  </p>
+
+  <figure class="fig">
+    <div class="bytemap" role="img" aria-label="Cobertura del CRC: calculado sobre los bytes 0 a 33+n y almacenado en los dos últimos bytes">
+      <span class="off col-span-15">0</span><span class="off col-span-2">34+n</span>
+      <div class="cell c1 col-span-15"><b>Bytes protegidos: 0 a 33+n</b><i>versión · uuid · device_id · lat · lon · tipo · banderas · personas · largo_texto · texto</i></div>
+      <div class="cell crc col-span-2"><b>crc</b><i>big-endian</i></div>
+    </div>
+    <figcaption>
+      <b>Fig. 8</b> — Cobertura del CRC. Se calcula sobre todo el paquete excepto sus propios dos bytes.
+      <span class="src">Fuente: app/Protocol/PayloadReporte.php:20-26,102-124,266-289</span>
+    </figcaption>
+  </figure>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 11</span>Parámetros del CRC<span class="tref">PayloadReporte.php:45-47,266-289</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr><th scope="col" class="w-[52mm]">Parámetro</th><th scope="col" class="w-[40mm]">Valor</th><th scope="col">Nota</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="k">Variante</td><td class="mono">CRC-16/CCITT-FALSE</td><td>Estándar de uso común</td></tr>
+        <tr><td class="k">Polinomio</td><td class="mono">0x1021</td><td></td></tr>
+        <tr><td class="k">Valor inicial</td><td class="mono">0xFFFF</td><td></td></tr>
+        <tr><td class="k">Reflexión de entrada y salida</td><td class="mono">no</td><td></td></tr>
+        <tr><td class="k">XOR final</td><td class="mono">0x0000</td><td></td></tr>
+        <tr><td class="k">Vector de prueba</td><td class="mono">"123456789" → 0x29B1</td><td>Oráculo independiente en <span class="path">tests/Unit/PayloadReporteTest.php:25</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <h3>08.1 Orden de validación al decodificar</h3>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 12</span>Comprobaciones de <code>PayloadReporte::decode</code><span class="tref">PayloadReporte.php:102-160</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr><th scope="col" class="r w-[12mm]">Paso</th><th scope="col">Comprobación</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="num">1</td><td>Largo mínimo de 36 bytes</td></tr>
+        <tr><td class="num">2</td><td>Versión igual a 1</td></tr>
+        <tr><td class="num">3</td><td>CRC recalculado igual al recibido</td></tr>
+        <tr><td class="num">4</td><td><code>largo_texto</code> menor o igual a 140</td></tr>
+        <tr><td class="num">5</td><td>Largo total igual a 36 + <code>largo_texto</code></td></tr>
+        <tr><td class="num">6</td><td><code>tipo</code> entre 0 y 7</td></tr>
+        <tr><td class="num">7</td><td>UUID de versión 7 y variante RFC 4122</td></tr>
+        <tr><td class="num">8</td><td>Texto en UTF-8 válido</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <p>
+    Cualquier comprobación fallida lanza <code>PayloadInvalidoException</code>: el nodo
+    responde 400, registra el motivo y no emite ACK.
+  </p>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 13</span>Respuestas de <code>POST /api/reportes</code><span class="tref">ReportesController.php:34-73</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr><th scope="col" class="w-[20mm]">Código</th><th scope="col" class="w-[48mm]">Causa</th><th scope="col">Efecto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="pill pill-code">200</span></td><td>Reporte válido y nuevo</td><td>Se guarda en <code>eventos</code> y <code>cola_salida</code> en una transacción; responde el ACK de 17 B</td></tr>
+        <tr><td><span class="pill pill-code">200</span></td><td>UUID ya recibido</td><td>Devuelve el mismo ACK sin insertar de nuevo (idempotente)</td></tr>
+        <tr><td><span class="pill pill-code">400</span></td><td>Payload inválido (Tabla 12)</td><td><code>payload_invalido</code>; se registra el motivo y no se emite ACK</td></tr>
+        <tr><td><span class="pill pill-code">413</span></td><td>Más de 176 bytes</td><td><code>payload_demasiado_grande</code>; se comprueba antes de decodificar</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="warn">
+    <b>Alcance del CRC.</b> Detecta un bit cambiado por ruido, pero no una manipulación
+    deliberada: quien altere el contenido puede recalcular el CRC. La integridad frente
+    a un adversario la dan la cadena de hash del cuaderno y la firma opcional entre B y C
+    (sección 10).
+  </div>
+</section>
+
+<!-- ==================== 05 CANAL ==================== -->
+<section class="doc-section">
+  <h2><span class="sec-num">09</span>Canal de mensajes simulado</h2>
+
+  <p>
+    El proceso CANAL representa una red hostil: pierde, retrasa y desordena mensajes
+    entre A, B, C y D. La aleatoriedad es <strong>reproducible</strong>: la misma
+    semilla produce la misma secuencia de pérdidas, de modo que una falla observada
+    puede repetirse. El canal nunca reintenta; reintenta quien envía, y por eso el ACK
+    tiene significado.
+  </p>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 14</span>Parámetros del canal<span class="tref">config/sard.php:30-40</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr><th scope="col" class="w-[48mm]">Variable</th><th scope="col" class="r w-[26mm]">Valor</th><th scope="col">Efecto</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">CANAL_PERDIDA</td><td class="num">0,30</td><td>Probabilidad de perder un mensaje en cada tramo</td></tr>
+        <tr><td class="mono">CANAL_LAT_MIN_MS</td><td class="num">200 ms</td><td>Latencia mínima de un tramo</td></tr>
+        <tr><td class="mono">CANAL_LAT_MAX_MS</td><td class="num">3000 ms</td><td>Latencia máxima de un tramo</td></tr>
+        <tr><td class="mono">CANAL_DESORDEN</td><td class="num">0,20</td><td>Probabilidad de que un mensaje llegue tarde y fuera de orden</td></tr>
+        <tr><td class="mono">CANAL_VENTANA_ABIERTA_S</td><td class="num">5 s</td><td>Tiempo con el canal abierto en cada ciclo</td></tr>
+        <tr><td class="mono">CANAL_VENTANA_CERRADA_S</td><td class="num">15 s</td><td>Tiempo con el canal cerrado; la entrega se pospone a la próxima apertura</td></tr>
+        <tr><td class="mono">CANAL_MTU_B</td><td class="num">200 B</td><td>Tamaño máximo de un mensaje; más grande se rechaza con 413</td></tr>
+        <tr><td class="mono">CANAL_SEMILLA</td><td class="num">42</td><td>Semilla del generador reproducible</td></tr>
+        <tr><td class="mono">CANAL_SALTOS</td><td class="num">1</td><td>Tramos que atraviesa un mensaje; de 1 a 3</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <p>
+    Pérdida, ventanas y saltos se pueden cambiar en vivo con
+    <code>POST /api/canal/config</code> cuando <code>SARD_DEMO</code> está activo.
+  </p>
+
+  <h3>09.1 Cómo se decide cada fallo</h3>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 15</span>Modelo de fallos<span class="tref">Canal.php:88-110,184-205 · Aleatorio.php:21-24</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr><th scope="col" class="w-[24mm]">Efecto</th><th scope="col">Regla</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="k">Pérdida</td><td>El mensaje se pierde si <code>u(1)</code> es menor que la probabilidad de pérdida</td></tr>
+        <tr><td class="k">Latencia</td><td>Retardo = mínimo + <code>u(2)</code> × (máximo − mínimo)</td></tr>
+        <tr><td class="k">Desorden</td><td>Si <code>u(3)</code> es menor que la probabilidad de desorden, se suma un retardo de entre una y dos veces la latencia máxima (3 a 6 s)</td></tr>
+        <tr><td class="k">Ventanas</td><td>El canal está cerrado cuando (ahora − arranque) mod (abierta + cerrada) es mayor o igual que la ventana abierta</td></tr>
+        <tr><td class="k">Saltos</td><td>Cada tramo repite el sorteo con <code>u(k + 4·(s − 1))</code>; un mensaje puede perderse en cualquier tramo. Con un salto la secuencia es idéntica a la del canal sin multisalto</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <p>
+    La función <code>u(k)</code> toma los primeros 4 bytes de <code>sha1(semilla|seq|k)</code>
+    y los normaliza a [0, 1]. Depende solo de la semilla, del número de secuencia del
+    mensaje y de k.
+  </p>
+
+  <h3>09.2 Protocolo de envío y confirmación</h3>
+
+  <figure class="fig">
+    <svg viewBox="0 0 680 436" class="font-sans" role="img" aria-label="Diagrama de secuencia: A envía al canal, el canal entrega al líder y el ACK vuelve a A por el canal">
+      <defs>
+        <marker id="q-a" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="10" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-brand-600"/></marker>
+        <marker id="q-b" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="10" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-brand-400"/></marker>
+      </defs>
+
+      <line class="s-life" x1="80" y1="28" x2="80" y2="428"/>
+      <line class="s-life" x1="340" y1="28" x2="340" y2="428"/>
+      <line class="s-life" x1="600" y1="28" x2="600" y2="428"/>
+
+      <rect class="s-head" x="15" y="0" width="130" height="28" rx="5"/>
+      <text class="s-ttl" x="80" y="18" text-anchor="middle">A · emisor (A4)</text>
+      <rect class="s-head-alt" x="275" y="0" width="130" height="28" rx="5"/>
+      <text class="s-ttl" x="340" y="18" text-anchor="middle">CANAL</text>
+      <rect class="s-head" x="535" y="0" width="130" height="28" rx="5"/>
+      <text class="s-ttl" x="600" y="18" text-anchor="middle">Líder (B o C)</text>
+
+      <text class="s-val" x="210" y="56" text-anchor="middle">POST /api/canal/enviar</text>
+      <line class="s-ln" x1="80" y1="66" x2="340" y2="66" marker-end="url(#q-a)"/>
+      <text class="s-dim" x="210" y="80" text-anchor="middle">origen, destino, ruta, cuerpo_b64</text>
+
+      <text class="s-val" x="210" y="102" text-anchor="middle">202 {mensaje_id, estado}</text>
+      <line class="s-ln-ret" x1="340" y1="112" x2="80" y2="112" marker-end="url(#q-b)"/>
+      <text class="s-dim" x="210" y="126" text-anchor="middle">estado: en_cola o perdido</text>
+
+      <rect class="s-box-soft" x="240" y="140" width="200" height="44" rx="5"/>
+      <text class="s-txt" x="340" y="157" text-anchor="middle">sortea pérdida, latencia y desorden</text>
+      <text class="s-txt" x="340" y="172" text-anchor="middle">ventana cerrada: pospone la entrega</text>
+
+      <text class="s-val" x="470" y="212" text-anchor="middle">POST {ruta} · X-Sard-Origen</text>
+      <line class="s-ln" x1="340" y1="222" x2="600" y2="222" marker-end="url(#q-a)"/>
+      <text class="s-dim" x="470" y="236" text-anchor="middle">cuerpo original, al vencer deliver_at</text>
+
+      <text class="s-val" x="470" y="258" text-anchor="middle">200 OK</text>
+      <line class="s-ln-ret" x1="600" y1="268" x2="340" y2="268" marker-end="url(#q-b)"/>
+
+      <text class="s-val" x="470" y="298" text-anchor="middle">POST /api/canal/enviar</text>
+      <line class="s-ln" x1="600" y1="308" x2="340" y2="308" marker-end="url(#q-a)"/>
+      <text class="s-dim" x="470" y="322" text-anchor="middle">ACK {reporte_uuid, nodo, epoca}</text>
+
+      <text class="s-val" x="210" y="348" text-anchor="middle">POST /api/acks</text>
+      <line class="s-ln" x1="340" y1="358" x2="80" y2="358" marker-end="url(#q-a)"/>
+      <text class="s-dim" x="210" y="372" text-anchor="middle">tras otro sorteo de pérdida y latencia</text>
+
+      <rect class="s-box-soft" x="0" y="388" width="250" height="40" rx="5"/>
+      <text class="s-txt" x="125" y="405" text-anchor="middle">A borra el reporte de su cola solo</text>
+      <text class="s-txt" x="125" y="419" text-anchor="middle">al recibir el ACK; si no, reintenta</text>
+    </svg>
+    <figcaption>
+      <b>Fig. 9</b> — Envío de un reporte de A al líder y confirmación de vuelta. Cada
+      trayecto por el canal puede perder, retrasar o desordenar el mensaje.
+      <span class="src">Fuente: app/Channel/CanalController.php:17-43 · Canal.php:43-81,115-160 · app/Node/B/EntregaController.php:38-72</span>
+    </figcaption>
+  </figure>
+
+  <h3>09.3 Reintentos del emisor</h3>
+  <p>
+    A4 reintenta cada reporte hasta recibir el ACK, sin límite de intentos. La espera
+    crece según una serie fija y se le aplica una variación aleatoria de ±20 % para que
+    dos reportes que fallaron a la vez no reintenten en el mismo instante.
+  </p>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 16</span>Espera entre intentos<span class="tref">Comunicacion.php:247-256 · config/sard.php:42-43</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr><th scope="col" class="w-[34mm]">Intento</th><th scope="col" class="r">1</th><th scope="col" class="r">2</th><th scope="col" class="r">3</th><th scope="col" class="r">4</th><th scope="col" class="r">5</th><th scope="col" class="r">6 o más</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="k">Espera base</td><td class="num">1 s</td><td class="num">2 s</td><td class="num">4 s</td><td class="num">8 s</td><td class="num">16 s</td><td class="num">30 s</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <p>
+    Como el UUID identifica cada reporte, un reintento que llega después de un ACK
+    perdido no crea un duplicado: el nodo responde el mismo ACK (Tabla 13).
+  </p>
+</section>
+
+<!-- ==================== 06 SEGURIDAD ==================== -->
+<section class="doc-section [break-before:page]">
+  <h2><span class="sec-num">10</span>Seguridad y consistencia</h2>
+
+  <p>
+    Las garantías del sistema son de <strong>consistencia e integridad</strong>:
+    que no haya dos líderes escribiendo, que el cuaderno no se altere y que ningún
+    despacho ocurra sin una persona. No hay autenticación de usuarios, y el documento
+    lo declara en la sección 10.3.
+  </p>
+
+  <div class="tbl-wrap long">
+    <div class="tbl-title"><span class="tnum">Tabla 17</span>Mecanismos de consistencia e integridad<span class="tref">archivo:línea</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr><th scope="col" class="w-[34mm]">Mecanismo</th><th scope="col">Qué garantiza y cómo</th><th scope="col" class="w-[46mm]">Código</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="k">Fencing por época</td><td>Una escritura con <code>X-Sard-Epoca</code> menor que la local se rechaza con <span class="pill pill-code">409</span> <code>epoca_vieja</code>. Un líder viejo no puede escribir tras un failover</td><td class="mono">FencingMiddleware.php:18-29</td></tr>
+        <tr><td class="k">Rutas por rol</td><td>Las rutas de un rol responden 404 en los demás nodos; un nodo solo expone lo que le corresponde</td><td class="mono">SoloRol.php:17-23</td></tr>
+        <tr><td class="k">Latido y failover</td><td>El líder late cada 1 s. El seguidor asume tras 10 latidos perdidos (10 s), sube la época, anuncia el cambio y reencola lo que el líder anterior no terminó</td><td class="mono">Resiliencia.php:86-165</td></tr>
+        <tr><td class="k">Cuaderno append-only</td><td>Dos triggers de SQLite abortan cualquier <code>UPDATE</code> o <code>DELETE</code> sobre <code>eventos</code></td><td class="mono">create_eventos_table.php:33-47</td></tr>
+        <tr><td class="k">Cadena de hash</td><td>Cada evento guarda <code>sha256(hash_prev|json canónico)</code>; el primero parte de 64 ceros. El hash de un evento remoto se verifica antes de insertarlo</td><td class="mono">EventLog.php:113-143,260-273</td></tr>
+        <tr><td class="k">Idempotencia por UUID</td><td>Un reporte repetido recibe el mismo ACK sin insertarse; la unión de cuadernos ignora los UUID que ya existen</td><td class="mono">ReportesController.php:63-67</td></tr>
+        <tr><td class="k">Firma Ed25519</td><td>El lote que viaja entre B y C va firmado y se verifica antes de insertar; si un byte no cuadra se rechaza el lote completo con <span class="pill pill-code">401</span>. <strong>Apagada por defecto</strong> (<code>SARD_FIRMA=false</code>)</td><td class="mono">Firmador.php:35-60 · ControlController.php:98-117</td></tr>
+        <tr><td class="k">Decisión humana</td><td>Ninguna alerta sale sin una <code>DecisionHumana</code>. Solo el líder acepta decisiones; el seguidor responde <span class="pill pill-code">409</span> <code>no_lider</code></td><td class="mono">Coordinacion.php:17-18 · DecisionController.php:25-30</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <h3>10.1 Respuesta ante fallas</h3>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 18</span>Qué ocurre ante cada falla</div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr><th scope="col" class="w-[50mm]">Falla</th><th scope="col">Respuesta del sistema</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="k">Mensaje perdido en el canal</td><td>A reintenta con espera creciente hasta recibir el ACK</td></tr>
+        <tr><td class="k">ACK perdido</td><td>El reintento de A recibe el mismo ACK; no se duplica el reporte</td></tr>
+        <tr><td class="k">Payload corrupto</td><td>El CRC no cuadra, el nodo responde 400 y descarta el paquete</td></tr>
+        <tr><td class="k">Cae el líder</td><td>A los 10 s el seguidor asume con una época mayor y retoma el procesamiento pendiente</td></tr>
+        <tr><td class="k">Un líder viejo sigue escribiendo</td><td>Recibe 409 <code>epoca_vieja</code> y redescubre al líder vigente</td></tr>
+        <tr><td class="k">Regresa el nodo caído</td><td>Descubre la época mayor, queda como seguidor y une su cuaderno por UUID</td></tr>
+        <tr><td class="k">Reporte o decisión en un seguidor</td><td>Responde 409 <code>no_lider</code>; el emisor reintenta</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <h3>10.2 Verificación del failover</h3>
+  <p>
+    En una ejecución con los cinco procesos, el último latido de B llegó a las
+    05:14:10.004Z. C asumió como líder a las 05:14:20.283Z, es decir, 10,3 s después.
+    B se reincorporó a las 05:14:43.382Z con 8 eventos insertados y 0 ignorados (Fig. 2).
+  </p>
+
+  <h3>10.3 Límites de seguridad</h3>
+
+  <div class="warn">
+    <b>Sin autenticación de usuarios.</b> El sistema no tiene usuarios, contraseñas ni
+    tokens. Los nodos se identifican por las cabeceras <code>X-Sard-Nodo</code> y
+    <code>X-Sard-Epoca</code> y por el rol configurado en el entorno. Cualquier persona con
+    acceso a la red local puede aprobar alertas o hacerse pasar por un nodo, y el
+    fencing no detiene a un impostor que declare una época alta. Es coherente con el
+    prototipo, que opera con datos sintéticos en una red controlada, pero un
+    despliegue real exigiría autenticación entre nodos y por operador.
+  </div>
+
+  <ul>
+    <li>El CRC no es una medida de seguridad (sección 08).</li>
+    <li>La firma Ed25519 cubre solo el tráfico entre B y C, y requiere activar <code>SARD_FIRMA</code> y generar las llaves con <code>php artisan sard:llaves</code>. Las llaves privadas viven en <span class="path">storage/keys/</span>, fuera de git.</li>
+    <li>El modelo <code>User</code> de Laravel existe en el repositorio, pero ninguna ruta lo usa.</li>
+  </ul>
+</section>
+
+<!-- ==================== 07 RADIO ==================== -->
+<section class="doc-section [break-before:page]">
+  <h2><span class="sec-num">11</span>Escalabilidad a radiofrecuencia</h2>
+
+  <div class="warn">
+    <b>Propuesta posterior al prototipo.</b> Ninguna parte del código actual implementa
+    un enlace de radio. Esta sección describe cómo se podría extender SARD sin cambiar
+    la lógica del backend. Los alcances son rangos generales de tecnologías de radio
+    existentes, no mediciones del proyecto.
+  </div>
+
+  <h3>11.1 El problema</h3>
+  <p>
+    En un apagón real no hay internet de operadora ni siempre electricidad, y el
+    celular no puede llegar al sistema. El prototipo asume una red IP local (Wi-Fi o
+    cable) entre el teléfono y los nodos. La propuesta añade un enlace de radio de largo
+    alcance, por ejemplo LoRa, con estaciones intermedias que no dependen de torres
+    celulares ni de cableado.
+  </p>
+
+  <h3>11.2 Arquitectura propuesta</h3>
+
+  <figure class="fig">
+    <svg viewBox="0 0 680 150" class="font-sans" role="img" aria-label="Cadena propuesta: celular, estación intermedia, gateway y nodo A de Laravel">
+      <defs>
+        <marker id="x-a" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="10" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-brand-600"/></marker>
+        <marker id="x-b" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="10" refY="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-brand-400"/></marker>
+      </defs>
+
+      <line class="stroke-brand-400 stroke-[1.4]" x1="184" y1="22" x2="496" y2="22"/>
+      <text class="s-lbl" x="184" y="12">NUEVO · POSTERIOR AL PROTOTIPO</text>
+      <text class="s-lbl" x="0" y="12">EXISTENTE</text>
+      <line class="s-rule" x1="0" y1="22" x2="128" y2="22"/>
+      <text class="s-lbl" x="552" y="12">EXISTENTE</text>
+      <line class="s-rule" x1="552" y1="22" x2="680" y2="22"/>
+
+      <g transform="translate(0,34)">
+        <rect class="s-box" x="0.75" y="0.75" width="126.5" height="64.5" rx="6"/>
+        <text class="s-ttl-dark" x="64" y="28" text-anchor="middle">Celular</text>
+        <text class="s-txt" x="64" y="46" text-anchor="middle">PWA ciudadana</text>
+      </g>
+      <g transform="translate(184,34)">
+        <rect class="s-box-dash" x="0.75" y="0.75" width="126.5" height="64.5" rx="6"/>
+        <text class="s-ttl-dark" x="64" y="24" text-anchor="middle">Estación</text>
+        <text class="s-txt" x="64" y="40" text-anchor="middle">ESP32 o Raspberry Pi</text>
+        <text class="s-txt" x="64" y="53" text-anchor="middle">+ módulo de radio</text>
+      </g>
+      <g transform="translate(368,34)">
+        <rect class="s-box-dash" x="0.75" y="0.75" width="126.5" height="64.5" rx="6"/>
+        <text class="s-ttl-dark" x="64" y="24" text-anchor="middle">Gateway</text>
+        <text class="s-txt" x="64" y="40" text-anchor="middle">radio → HTTP</text>
+        <text class="s-txt" x="64" y="53" text-anchor="middle">payload intacto</text>
+      </g>
+      <g transform="translate(552,34)">
+        <rect class="s-box" x="0.75" y="0.75" width="126.5" height="64.5" rx="6"/>
+        <text class="s-ttl-dark" x="64" y="24" text-anchor="middle">Nodo A</text>
+        <text class="s-txt" x="64" y="40" text-anchor="middle">Laravel</text>
+        <text class="s-txt" x="64" y="53" text-anchor="middle">sin cambios</text>
+      </g>
+
+      <line class="s-ln-dir" x1="128" y1="66" x2="184" y2="66" marker-end="url(#x-b)"/>
+      <text class="s-val" x="156" y="60" text-anchor="middle">Wi-Fi</text>
+      <text class="s-dim text-[9px]" x="156" y="82" text-anchor="middle">100–300 m*</text>
+      <line class="s-ln-dir" x1="312" y1="66" x2="368" y2="66" marker-end="url(#x-b)"/>
+      <text class="s-val" x="340" y="60" text-anchor="middle">Radio</text>
+      <text class="s-dim text-[9px]" x="340" y="82" text-anchor="middle">2–20 km*</text>
+      <line class="s-ln" x1="496" y1="66" x2="552" y2="66" marker-end="url(#x-a)"/>
+      <text class="s-val" x="524" y="60" text-anchor="middle">HTTP</text>
+      <text class="s-dim" x="524" y="82" text-anchor="middle">red local</text>
+
+      <line class="s-rule" x1="0" y1="118" x2="680" y2="118"/>
+      <rect class="s-box" x="0" y="130" width="22" height="12" rx="2"/>
+      <text class="s-dim" x="30" y="139.5">componente existente</text>
+      <rect class="s-box-dash" x="190" y="130" width="22" height="12" rx="2"/>
+      <text class="s-dim" x="220" y="139.5">componente nuevo</text>
+      <text class="s-dim" x="372" y="139.5">* alcance estimado, no especificación</text>
+    </svg>
+    <figcaption>
+      <b>Fig. 10</b> — Cadena propuesta de comunicación. La estación y el gateway son la única
+      capa nueva; a partir del nodo A el flujo es el del prototipo.
+      <span class="src">Fuente: nodo A en routes/api.php:35-39</span>
+    </figcaption>
+  </figure>
+
+  <ol>
+    <li>El ciudadano reporta desde la PWA y el celular envía el paquete por Wi-Fi local a la estación más cercana.</li>
+    <li>La estación lo reenvía por radio hacia el gateway, directamente o a través de otras estaciones.</li>
+    <li>El gateway extrae el payload v1 y lo envía como cuerpo binario a <code>POST /api/reportes</code> del nodo A. Devuelve el ACK de 17 B por la misma vía.</li>
+    <li>Desde el nodo A el flujo es el descrito en las secciones 01 y 03: canal, líder, triaje y tablero.</li>
+  </ol>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 19</span>Qué cambia y qué se conserva</div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr><th scope="col" class="w-[84mm]">Se conserva (lógica de Laravel)</th><th scope="col">Cambia (capa de transporte)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Guardado de reportes con UUID e idempotencia</td><td>De HTTP directo celular → nodo a celular → estación → radio → gateway → HTTP → nodo</td></tr>
+        <tr><td>Triaje y priorización P1 a P4</td><td>Aparece el gateway como traductor entre radio y HTTP</td></tr>
+        <tr><td>Cambio de líder por época</td><td>Hay que definir una trama de radio con origen, destino, tipo de mensaje y checksum</td></tr>
+        <tr><td>Tablero y decisión humana</td><td>Cada estación necesita energía independiente (batería y panel solar)</td></tr>
+        <tr><td>Cuaderno append-only con cadena de hash</td><td>El gateway reenvía el payload sin convertirlo a JSON y devuelve el ACK</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <h3>11.3 Lo que el prototipo ya anticipa</h3>
+  <p>
+    El canal simulado fue diseñado con las limitaciones de un enlace de radio. La
+    Tabla 20 relaciona cada parámetro del prototipo con lo que implicaría en el enlace real.
+  </p>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 20</span>Parámetros del prototipo frente al enlace de radio</div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr><th scope="col" class="w-[34mm]">Parámetro</th><th scope="col" class="w-[28mm]">Prototipo</th><th scope="col">Implicación para el enlace de radio</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="k">Tamaño del payload</td><td class="mono">36 a 176 B</td><td>La trama de radio debe transportarlo entero. Con la MTU de 200 B como referencia, quedan 24 B para direcciones, tipo y checksum. Hay que confirmarlo con el hardware elegido</td></tr>
+        <tr><td class="k">Pérdida</td><td class="mono">30 %</td><td>El ACK y el reintento con espera creciente ya cubren la pérdida; el UUID evita duplicados al retransmitir</td></tr>
+        <tr><td class="k">Latencia y desorden</td><td class="mono">0,2 a 3 s</td><td>Las operaciones son idempotentes y no dependen del orden de llegada</td></tr>
+        <tr><td class="k">Ventanas</td><td class="mono">5 s / 15 s</td><td>Representan un enlace intermitente; A4 conserva el reporte hasta confirmar</td></tr>
+        <tr><td class="k">Saltos</td><td class="mono">1 a 3</td><td>Equivalen a estaciones repetidoras; cada tramo suma su propia pérdida</td></tr>
+        <tr><td class="k">Integridad</td><td class="mono">CRC-16</td><td>El payload mantiene su propio CRC sobre cualquier control de errores de la capa de radio</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <h3>11.4 Alcances estimados</h3>
+
+  <div class="tbl-wrap">
+    <div class="tbl-title"><span class="tnum">Tabla 21</span>Alcances aproximados<span class="tref">estimados, no del prototipo</span></div>
+    <div class="tbl-frame">
+    <table class="tbl">
+      <thead>
+        <tr><th scope="col" class="w-[56mm]">Conexión</th><th scope="col" class="w-[30mm]">Alcance</th><th scope="col">Comentario</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="k">Celular → estación (Wi-Fi local)</td><td class="mono">100 a 300 m</td><td>Depende de obstáculos y potencia del Wi-Fi</td></tr>
+        <tr><td class="k">Estación → estación (radio)</td><td class="mono">2 a 20 km</td><td>Depende de frecuencia, antena y terreno</td></tr>
+        <tr><td class="k">Estación en punto alto → ciudad</td><td class="mono">Amplia</td><td>Útil en ciudades montañosas como Manizales</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <h3>11.5 Trabajo pendiente</h3>
+  <ol>
+    <li>Elegir el hardware de radio: módulos, frecuencia y potencia.</li>
+    <li>Definir la trama que viaja por el aire: dirección de origen y destino, tipo de mensaje y checksum.</li>
+    <li>Construir el gateway en cualquier lenguaje con puerto serie y HTTP. Debe reenviar el payload binario v1 sin convertirlo a JSON y devolver el ACK de 17 B.</li>
+    <li>Probar en campo alcances, consumo de batería y comportamiento sin electricidad.</li>
+    <li>Documentar el despliegue: ubicación de estaciones, permisos en postes y mantenimiento.</li>
+  </ol>
+
+  <p>
+    Con puntos estratégicos como una plaza, una escuela o un puesto de salud se cubre
+    buena parte de un pueblo, sin una estación por vivienda.
+  </p>
+</section>
+
+
+
+</main>
+</body>
+</html>

@@ -1,0 +1,146 @@
+/*
+ * base.css — tokens, tipografía, reset y movimiento.
+ * Los valores sard-* son copia literal del tema oscuro de resources/css/sard-tokens.css.
+ */
+
+@font-face { font-family: 'Instrument Sans'; src: url('../fonts/InstrumentSans-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Instrument Sans'; src: url('../fonts/InstrumentSans-500.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Instrument Sans'; src: url('../fonts/InstrumentSans-600.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Instrument Sans'; src: url('../fonts/InstrumentSans-700.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+
+:root {
+    /* Superficies y texto (sard-tokens.css, .dark) */
+    --sard-background: #0a0a0a;
+    --sard-foreground: #ededec;
+    --sard-muted: #a1a09a;
+    --sard-surface: #161615;
+    --sard-surface-2: #1d1d1b;
+    --sard-border: #3e3e3a;
+    --sard-border-hover: #62605b;
+    --sard-accent: #ff4433;
+    --sard-accent-hover: #f61500;
+    --sard-healthy: #4ade80;
+    --sard-degraded: #fbbf24;
+    --sard-down: #ef4444;
+    --sard-focus: #ff750f;
+
+    /* Semáforo de prioridad */
+    --sard-p1: #ef4444; --sard-p1-ink: #0a0a0a;
+    --sard-p2: #fb923c; --sard-p2-ink: #0a0a0a;
+    --sard-p3: #facc15; --sard-p3-ink: #0a0a0a;
+    --sard-p4: #57534e; --sard-p4-ink: #ededec;
+
+    --sard-map-grid: #fffaed0f;
+    --sard-selection: #ff443340;
+
+    /* Tipografía (DESIGN.md §2) */
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    --size-xs: 0.75rem;
+    --size-sm: 0.875rem;
+    --size-base: 1rem;
+    --size-lg: 1.125rem;
+    --size-xl: 1.25rem;
+    --size-2xl: 1.5rem;
+    --size-3xl: 1.875rem;
+    --size-h1: clamp(2rem, 4.5vw, 3.75rem);
+    --size-display: clamp(3rem, 7vw, 6.5rem);
+
+    /* Espaciado (rejilla de 4 px) */
+    --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+    --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-12: 48px;
+
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --shadow-borde: inset 0 0 0 1px #fffaed2d;
+
+    /* Movimiento (sincronizado con GSAP en js/core/escenas.js) */
+    --dur-feedback: 120ms;
+    --dur-entrada: 600ms;
+    --dur-salida: 450ms;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+    color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* [hidden] siempre gana: ninguna regla de display de un componente puede mostrar lo oculto. */
+[hidden] { display: none !important; }
+
+html, body {
+    margin: 0;
+    height: 100%;
+}
+
+body {
+    background: var(--sard-background);
+    color: var(--sard-foreground);
+    font-family: var(--font-sans);
+    font-size: var(--size-base);
+    line-height: 1.55;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    overflow: hidden; /* la navegación es por escenas, no por scroll del documento */
+}
+
+::selection { background: var(--sard-selection); color: inherit; }
+
+h1, h2, h3, p, ol, ul, dl, dd, figure { margin: 0; }
+ol, ul { padding: 0; list-style: none; }
+button, input { font: inherit; color: inherit; }
+img, svg { display: block; }
+
+h1 { font-size: var(--size-h1); font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; text-wrap: balance; }
+h2 { font-size: var(--size-3xl); font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; }
+h3 { font-size: var(--size-2xl); font-weight: 600; line-height: 1.2; }
+
+.display { font-size: var(--size-display); font-weight: 700; letter-spacing: -0.03em; line-height: 1; text-wrap: balance; }
+.texto-l { font-size: var(--size-xl); line-height: 1.45; }
+.caption { font-size: var(--size-sm); color: var(--sard-muted); }
+.label {
+    font-size: var(--size-xs);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--sard-muted);
+}
+.dato { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--font-mono); }
+.acento { color: var(--sard-accent); }
+.muted { color: var(--sard-muted); }
+
+/* Foco visible: 3 px, siempre (INTERACTION_SPEC §7.2) */
+:focus { outline: none; }
+:focus-visible { outline: 3px solid var(--sard-focus); outline-offset: 2px; }
+
+.sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+.saltar {
+    position: fixed; top: var(--space-2); left: var(--space-2); z-index: 70;
+    padding: var(--space-2) var(--space-4);
+    background: var(--sard-surface); border: 1px solid var(--sard-border); border-radius: var(--radius-sm);
+    color: var(--sard-foreground); text-decoration: none;
+    transform: translateY(-200%);
+}
+.saltar:focus-visible { transform: none; }
+
+.icono { width: 1.25em; height: 1.25em; flex-shrink: 0; }
+
+/* prefers-reduced-motion: las duraciones CSS caen a 0. GSAP lo gestiona en escenas.js. */
+@media (prefers-reduced-motion: reduce) {
+    :root { --dur-feedback: 0ms; --dur-entrada: 0ms; --dur-salida: 0ms; }
+    *, *::before, *::after {
+        transition-duration: 0ms !important;
+        animation-duration: 0ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}

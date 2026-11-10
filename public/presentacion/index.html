@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="color-scheme" content="dark">
+    <meta name="description" content="SARD GAMMA TECH · Reportes de emergencia que llegan aunque no haya señal.">
+    <title>SARD GAMMA TECH · El Faro</title>
+
+    <link rel="icon" href="icons/sard.svg" type="image/svg+xml">
+    <link rel="preload" href="fonts/InstrumentSans-600.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/InstrumentSans-700.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/componentes.css">
+    <link rel="stylesheet" href="css/escenas.css">
+</head>
+<body>
+    <a class="saltar" href="#contenido">Saltar al contenido</a>
+
+    <!-- 1. Escenario 3D: decorativo. Toda la información vive en el DOM. -->
+    <div id="escena-3d" aria-hidden="true"></div>
+
+    <!-- 2. Capa de anclas: botones HTML posicionados sobre objetos 3D (H2). -->
+    <div id="anclas" class="anclas"></div>
+
+    <!-- 3. Contenido: aquí vive TODA la información de cada escena. -->
+    <main id="contenido" tabindex="-1" aria-busy="true"></main>
+
+    <!-- 4. HUD -->
+    <header id="hud" class="hud" data-estado="idle">
+        <div id="progreso" class="progreso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div id="progreso-relleno" class="progreso__relleno"></div>
+        </div>
+        <nav class="hud__barra" data-i18n-aria="hud.etiqueta">
+            <span class="hud__marca">
+                <img src="icons/sard.svg" alt="" width="20" height="20">
+                <span>SARD</span>
+            </span>
+            <p id="miga" class="hud__miga"></p>
+            <div class="hud__acciones">
+                <span id="hud-estado" class="badge" role="status" hidden></span>
+                <button id="btn-indice" type="button" class="btn btn--fantasma" data-i18n="hud.indice"></button>
+                <button id="btn-ayuda" type="button" class="btn btn--fantasma btn--icono" data-i18n-aria="hud.ayuda">?</button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- 5. Controles de navegación (equivalente visible de las teclas; se ocultan con H). -->
+    <nav id="controles" class="controles">
+        <button id="btn-anterior" type="button" class="btn btn--secundario" data-i18n="nav.anterior"></button>
+        <button id="btn-siguiente" type="button" class="btn btn--primario" data-i18n="nav.siguiente"></button>
+    </nav>
+
+    <!-- 6. Diálogos nativos: foco atrapado y Esc sin código adicional. -->
+    <dialog id="dlg-indice" class="dialogo" aria-labelledby="dlg-indice-titulo"></dialog>
+    <dialog id="dlg-atajos" class="dialogo" aria-labelledby="dlg-atajos-titulo"></dialog>
+    <dialog id="dlg-demo" class="dialogo dialogo--ancho" aria-labelledby="dlg-demo-titulo"></dialog>
+    <dialog id="dlg-confirmar" class="dialogo dialogo--estrecho" aria-labelledby="dlg-confirmar-titulo"></dialog>
+
+    <!-- 7. Regiones vivas -->
+    <p id="anuncio" class="sr-only" role="status" aria-live="polite"></p>
+    <div id="avisos" class="avisos" role="alert" aria-live="assertive"></div>
+
+    <!-- 8. Loader (solo espera a lo que de verdad se carga: las fuentes locales) -->
+    <div id="loader" class="loader" aria-hidden="true">
+        <img src="icons/sard.svg" alt="" width="56" height="56">
+        <div class="loader__barra"><div id="loader-relleno"></div></div>
+    </div>
+
+    <!-- 9. Sin JavaScript -->
+    <noscript>
+        <div class="noscript">Esta presentación necesita JavaScript. Ábrela en Chrome, Edge, Firefox o Safari recientes.</div>
+    </noscript>
+
+    <!-- Scripts clásicos (no módulos ES) para que funcione con file://. El orden es la dependencia. -->
+    <script src="vendor/gsap.min.js"></script>
+    <script src="vendor/ScrollTrigger.min.js"></script>
+    <script src="vendor/DrawSVGPlugin.min.js"></script>
+    <script src="vendor/SplitText.min.js"></script>
+
+    <script src="content/es.js"></script>
+    <script src="datos/caso.js"></script>
+
+    <script src="js/core/utilidades.js"></script>
+    <script src="js/core/iconos.js"></script>
+    <script src="js/core/estado.js"></script>
+    <script src="js/core/errores.js"></script>
+    <script src="js/core/escenas.js"></script>
+    <script src="js/core/hud.js"></script>
+    <script src="js/core/router.js"></script>
+    <script src="js/core/app.js"></script>
+
+    <!-- Núcleo 3D. Three.js (vendor/three.iife.min.js) se inyecta solo si hay WebGL:
+         estos módulos usan THREE únicamente dentro de funciones. -->
+    <script src="js/three/materiales.js"></script>
+    <script src="js/three/calidad.js"></script>
+    <script src="js/three/motor.js"></script>
+    <script src="js/three/luces.js"></script>
+    <script src="js/three/niebla.js"></script>
+    <script src="js/three/terreno.js"></script>
+    <script src="js/three/faro.js"></script>
+    <script src="js/three/anclas.js"></script>
+    <script src="js/three/actores.js"></script>
+
+    <script src="js/anim/feedback.js"></script>
+
+    <!-- Escenas: registro.js define los esqueletos; cada sNN_*.js los reemplaza (H3). -->
+    <script src="js/escenas/registro.js"></script>
+    <script src="js/escenas/s00_apertura.js"></script>
+    <script src="js/escenas/s01_ciudad.js"></script>
+    <script src="js/escenas/s02_cadena_rota.js"></script>
+    <script src="js/escenas/s03_promesa.js"></script>
+    <script src="js/escenas/s04_principios.js"></script>
+    <script src="js/escenas/s05_flujo.js"></script>
+    <script src="js/escenas/s06_pwa.js"></script>
+    <script src="js/escenas/s07_canal.js"></script>
+    <script src="js/escenas/s08_agentes.js"></script>
+    <script src="js/escenas/s09_arquitectura.js"></script>
+    <script src="js/escenas/s10_resiliencia.js"></script>
+    <script src="js/escenas/s11_trazabilidad.js"></script>
+    <script src="js/escenas/s12_ia.js"></script>
+    <script src="js/escenas/s13_caso.js"></script>
+
+    <script src="js/escenas/s14_radio.js"></script>
+    <script src="js/escenas/s15_impacto.js"></script>
+    <script src="js/escenas/s16_cierre.js"></script>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

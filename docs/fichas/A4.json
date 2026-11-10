@@ -1,0 +1,82 @@
+{
+  "id": "A4",
+  "nombre": "Comunicación",
+  "rol": "Cola de salida y entrega de reportes hacia el líder",
+  "plano": "Nodo A",
+  "usa_llm": false,
+  "objetivo": "Decidir qué reporte sale primero hacia el líder, reintentando con backoff hasta recibir el ACK, y reconciliar lo pendiente cuando el líder cambia.",
+  "entradas": [
+    {
+      "campo": "cola_salida",
+      "tipo": "tabla<reportes_pendientes>",
+      "descripcion": "Reportes pendientes de ACK, con puntaje_base, intentos y proximo_intento",
+      "obligatorio": true
+    },
+    {
+      "campo": "canal",
+      "tipo": "ClienteCanal",
+      "descripcion": "Cliente de transporte hacia el CANAL",
+      "obligatorio": true
+    },
+    {
+      "campo": "estado_nodo",
+      "tipo": "EstadoNodo",
+      "descripcion": "Rol, época y líder conocido",
+      "obligatorio": true
+    }
+  ],
+  "salidas": [
+    {
+      "evento": "ConfirmadoSalida",
+      "ref": "reporte_uuid",
+      "payload": [
+        "reporte_uuid",
+        "nodo",
+        "epoca",
+        "bytes"
+      ],
+      "nota": "Confirmación de que el líder recibió el reporte; habilita el borrado de la copia local"
+    },
+    {
+      "evento": "Reconciliacion",
+      "ref": "reporte_uuid",
+      "payload": [
+        "reporte_uuid",
+        "faltantes",
+        "confirmados"
+      ],
+      "condicional": "Tras un cambio de líder, para devolver a la cola lo que el nuevo líder no tiene"
+    }
+  ],
+  "herramientas": [
+    "Ordenamiento por puntaje_efectivo (descendente), bytes (ascendente), UUID (ascendente)",
+    "Backoff exponencial: 1, 2, 4, 8, 16, 30 segundos con jitter ±20%",
+    "Procesamiento por lotes de LOTE = 10 reportes",
+    "Búsqueda de líder cada 10 segundos si 4 intentos fallidos"
+  ],
+  "memoria": "Mantiene tabla cola_salida en SQLite local. Persiste estado hasta recepción de ACK del líder.",
+  "limites_autonomia": [
+    "Puntaje bajo nunca se descarta: solo se pospone en la cola",
+    "Máximo LOTE = 10 reportes por ciclo de envío",
+    "Backoff máximo de 30 segundos con jitter para evitar thundering herd",
+    "Búsqueda de líder cada 10 segundos tras 4 intentos fallidos"
+  ],
+  "manejo_errores": [
+    "Si falla el ACK, se recalcula puntaje_efectivo (añade minutos en cola)",
+    "Si el canal está saturado (>1970 mensajes en cola), se quedan pendientes",
+    "Cuando el líder cambia (época mayor), se reconcilian reportes pendientes",
+    "Timeout de descubrimiento: 10 segundos de polling para nuevo líder"
+  ],
+  "criterios_terminacion": [
+    "ACK recibido del líder (0x41 + UUID) válido",
+    "Evento ConfirmadoSalida escrito y registro borrado de cola_salida",
+    "Reconciliacion completada si hay nodos caídos"
+  ],
+  "archivos": [
+    "app/Agents/A4/Comunicacion.php",
+    "app/Channel/ClienteCanal.php",
+    "app/Node/A/ReportesController.php"
+  ],
+  "verificacion": "Código verificado en app/Agents/A4/Comunicacion.php:19-37. En ejecución real, 632 de 1617 reportes de la cola del nodo A quedaron confirmados por el líder C, y el resto permanecía pendiente por saturación del canal, no por fallo del agente.",
+  "pruebas": ["AC-004a", "AC-004b", "AC-014a"]
+}

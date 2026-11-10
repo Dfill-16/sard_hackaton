@@ -1,0 +1,113 @@
+{
+  "id": "A6",
+  "nombre": "Coordinación",
+  "rol": "Propuesta de acción por incidente y emisión de la alerta al campo",
+  "plano": "Líder (nodo B o C)",
+  "usa_llm": "parcial: solo redacta la justificación cuando el LLM está habilitado; por defecto usa plantillas",
+  "objetivo": "Proponer qué hacer con cada incidente y qué unidad enviar, sin despachar nunca por su cuenta: la emisión de la alerta queda reservada a la decisión de una persona.",
+  "entradas": [
+    {
+      "campo": "incidenteUuid",
+      "tipo": "string",
+      "descripcion": "UUIDv7 del incidente a evaluar",
+      "obligatorio": true
+    },
+    {
+      "campo": "unidades",
+      "tipo": "tabla<unidades>",
+      "descripcion": "Unidades de socorro con tipo, posición y disponibilidad",
+      "obligatorio": true
+    },
+    {
+      "campo": "prioridad_incidente",
+      "tipo": "PrioridadIncidente",
+      "descripcion": "Prioridad base corregida por masivo, envejecimiento y rumor",
+      "obligatorio": true
+    }
+  ],
+  "salidas": [
+    {
+      "evento": "RecomendacionPropuesta",
+      "ref": "incidente_uuid",
+      "payload": [
+        "recomendacion_uuid",
+        "incidente_uuid",
+        "version",
+        "unidad_id",
+        "accion",
+        "justificacion",
+        "pendientes",
+        "distancia_m",
+        "modo"
+      ]
+    },
+    {
+      "evento": "DecisionHumana",
+      "ref": "incidente_uuid",
+      "payload": [
+        "decision_uuid",
+        "recomendacion_uuid",
+        "incidente_uuid",
+        "accion",
+        "motivo",
+        "operador"
+      ],
+      "nota": "Emitido desde POST /api/decisiones, no por el agente de forma autónoma"
+    },
+    {
+      "evento": "AlertaCampoEnviada",
+      "ref": "incidente_uuid",
+      "payload": [
+        "alerta_uuid",
+        "decision_uuid",
+        "incidente_uuid",
+        "unidad_id",
+        "texto"
+      ],
+      "nota": "Solo se emite como consecuencia de una DecisionHumana"
+    },
+    {
+      "evento": "AckCampo",
+      "ref": "alerta_uuid",
+      "payload": [
+        "alerta_uuid",
+        "recibido_en_campo"
+      ],
+      "condicional": "Cuando el equipo de campo acusa recibo de la alerta"
+    }
+  ],
+  "herramientas": [
+    "RedaccionLlm::generar() - crea justificación con IA si está habilitado",
+    "Plantilla de texto predefinida - fallback sin LLM",
+    "LARGO_MAXIMO_ALERTA = 120 caracteres",
+    "Propuesta de unidades disponibles según tipo"
+  ],
+  "memoria": "No persiste transitoriamente. Las recomendaciones y decisiones se guardan en tablas recomendaciones y decisiones con sus eventos asociados.",
+  "limites_autonomia": [
+    "Solo propone, nunca despacha: ninguna alerta sin DecisionHumana previa",
+    "La única ruta hacia AlertaCampoEnviada es POST /api/decisiones",
+    "Texto limitado a 120 caracteres (LARGO_MAXIMO_ALERTA)",
+    "Si la unidad está en uso, se proponen alternativas",
+    "Repropuestas usan plantilla fija para no demorar"
+  ],
+  "manejo_errores": [
+    "Si no hay unidad disponible del tipo necesario, se propone 'escalar a la central'",
+    "Si la unidad se asigna entre la propuesta y la aprobación, se devuelve 409 y se crea versión nueva",
+    "Sin LLM o fallo del proveedor, se usa plantilla por defecto",
+    "Error de red en envío de alerta: se reintenta hasta ACK del campo"
+  ],
+  "criterios_terminacion": [
+    "RecomendacionPropuesta escrita en el EventLog",
+    "DecisionHumana recibida vía API (sin LLM puede esperar indefinidamente)",
+    "AlertaCampoEnviada y AckCampo recibidos confirmando entrega",
+    "Contador de alertas y acuses coincide (prueba de consistencia)"
+  ],
+  "archivos": [
+    "app/Agents/A6/Coordinacion.php",
+    "app/Agents/A6/EnvioAlertas.php",
+    "app/Agents/A6/RedaccionLlm.php",
+    "app/Http/Controllers/Tablero/DecisionController.php"
+  ],
+  "verificacion": "Código verificado en app/Agents/A6/Coordinacion.php:15-37 y app/Http/Controllers/Tablero/DecisionController.php:12-15. En ejecución real: 3 DecisionHumana, 3 AlertaCampoEnviada y 1 AckCampo en el nodo C; la igualdad de los dos primeros conteos es la prueba en datos de que no hay alerta sin decisión previa.",
+  "pruebas": ["AC-008a", "AC-010a", "AC-016a", "AC-017a", "AC-024a"]
+}

@@ -1,0 +1,76 @@
+{
+  "id": "A2",
+  "nombre": "Triaje",
+  "rol": "Asignación de prioridad P1–P4 y cálculo de incertidumbre",
+  "plano": "Líder (nodo B o C)",
+  "usa_llm": false,
+  "llm": null,
+  "objetivo": "Convertir un reporte normalizado en una prioridad P1–P4 calculada por reglas explícitas y verificables, acompaña la incertidumbre sobre lo que el reporte no dice.",
+  "entradas": [
+    {
+      "campo": "normalizado",
+      "tipo": "array<string, mixed>",
+      "descripcion": "Payload del evento ReporteNormalizado",
+      "obligatorio": true
+    }
+  ],
+  "salidas": [
+    {
+      "evento": "TriajeAsignado",
+      "ref": "reporte_uuid",
+      "payload": [
+        "reporte_uuid",
+        "prioridad",
+        "puntaje",
+        "senales",
+        "incertidumbre",
+        "motivos_incertidumbre",
+        "modo"
+      ]
+    },
+    {
+      "evento": "PrioridadElevadaLLM",
+      "ref": "reporte_uuid",
+      "payload": [
+        "reporte_uuid",
+        "de",
+        "a",
+        "explicacion",
+        "proveedor",
+        "etiqueta"
+      ],
+      "condicional": "Solo si el LLM está habilitado y devuelve una prioridad estrictamente mayor"
+    }
+  ],
+  "herramientas": [
+    "Puntaje::calcular() - algoritmo de puntuación",
+    "Banderas::esCritica() - detección de banderas críticas",
+    "Config::get('llm_habilitado') - verificación de estado LLM",
+    "Calculadora de incertidumbre basada en factores ponderados"
+  ],
+  "memoria": "No persiste memoria explícita. Calcula puntaje e incertidumbre de forma funcional a partir del input normalizado.",
+  "limites_autonomia": [
+    "Orden fijo: primero Puntaje::calcular, luego regla critica (P1), luego bandas",
+    "Una bandera critica fuerza P1 directo",
+    "Modo por defecto: 'reglas' - apoyo, no diagnostico; sin LLM el sistema opera completo",
+    "La elevacion por IA solo puede subir, nunca bajar prioridad"
+  ],
+  "manejo_errores": [
+    "Si el reporte falta campos obligatorios, se devuelve excepción",
+    "Si Puntaje::calcular falla, el triaje no se asigna y se loggea el error",
+    "Error crítico: se detiene el procesamiento del reporte"
+  ],
+  "criterios_terminacion": [
+    "Evento TriajeAsignado escrito en el EventLog",
+    "Prioridad calculada en rango P1-P4",
+    "Incertidumbre calculada en el rango [0,1]"
+  ],
+  "archivos": [
+    "app/Agents/A2/Triaje.php",
+    "app/Agents/A2/ElevacionLlm.php",
+    "app/Sard/Reglas/Puntaje.php",
+    "app/Sard/Reglas/Banderas.php"
+  ],
+  "verificacion": "Código verificado en app/Agents/A2/Triaje.php:17-57 y app/Sard/Reglas/Puntaje.php:76-92. En ejecución real, los 1035 triajes del nodo C quedaron todos con origen = reglas y modo = reglas porque el LLM estaba deshabilitado.",
+  "pruebas": ["AC-012a"]
+}

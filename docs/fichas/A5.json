@@ -1,0 +1,77 @@
+{
+  "id": "A5",
+  "nombre": "Resiliencia",
+  "rol": "Latidos, failover, réplica y unión de cuadernos",
+  "plano": "Nodos B y C",
+  "usa_llm": false,
+  "objetivo": "Mantener exactamente un líder entre B y C mediante latidos y épocas, replicar el cuaderno hacia el seguidor y reconciliar ambos cuando un nodo se reinicia.",
+  "entradas": [
+    {
+      "campo": "latido",
+      "tipo": "evento HTTP",
+      "descripcion": "Latido con nodo, época y seq_max, emitido cada LATIDO_S segundos",
+      "obligatorio": true
+    },
+    {
+      "campo": "estado_nodo",
+      "tipo": "EstadoNodo",
+      "descripcion": "Rol, época, líder y marca del último latido",
+      "obligatorio": true
+    }
+  ],
+  "salidas": [
+    {
+      "evento": "LiderAsumido",
+      "ref": "nodo",
+      "payload": [
+        "nodo",
+        "epoca",
+        "anterior",
+        "motivo",
+        "ultimo_latido"
+      ]
+    },
+    {
+      "evento": "NodoReunido",
+      "ref": "nodo",
+      "payload": [
+        "nodo",
+        "epoca_lider",
+        "insertados",
+        "ignorados"
+      ]
+    }
+  ],
+  "herramientas": [
+    "Latidos directos HTTP (fuera del canal simulado): /api/latido",
+    "Sincronización por UUID con INSERT OR IGNORE",
+    "Lotes de LOTE_EVENTOS = 500 y LOTE_UNION = 200",
+    "Verificación de cadena de hash con EventLog::verificarCadena()"
+  ],
+  "memoria": "Mantiene EventLog local de 500+ eventos. Sincroniza mediante lote de eventos y unión idempotente por UUID.",
+  "limites_autonomia": [
+    "LATIDOS_PERDIDOS = 10: se considera caído al líder tras 10 segundos sin latidos",
+    "Época se incrementa en 1 al asumir liderazgo",
+    "El follower debe estar al día antes de asumir",
+    "La unión es idempotente: si el nodo ya tiene los eventos, se ignoran",
+    "Sin LLM: la lógica de failover es totalmente convencional"
+  ],
+  "manejo_errores": [
+    "Si no hay latido por 10 segundos, el follower asume automáticamente",
+    "Si el líder vuelve con época menor, queda como follower",
+    "Los eventos duplicados se ignoran por UUID único",
+    "La verificación de hash detecta corrupción y se rechaza la cadena"
+  ],
+  "criterios_terminacion": [
+    "Líder identificado por la época más alta",
+    "Cuadernos sincronizados (insertados e ignorados coinciden)",
+    "Evento LiderAsumido o NodoReunido escrito con éxito"
+  ],
+  "archivos": [
+    "app/Agents/A5/Resiliencia.php",
+    "app/Node/B/ControlController.php",
+    "app/Sard/Log/EventLog.php"
+  ],
+  "verificacion": "Código verificado en app/Agents/A5/Resiliencia.php:18-33. En ejecución real: último latido de B 05:14:10.004Z, C asumió a las 05:14:20.283Z (10,279 ms), B se unió a las 05:14:43.382Z con 8 eventos insertados y 0 ignorados, y ambos quedaron con 579 incidentes idénticos.",
+  "pruebas": ["AC-007a", "AC-015a"]
+}
