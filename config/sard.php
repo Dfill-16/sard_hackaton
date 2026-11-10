@@ -78,4 +78,23 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Firma Ed25519 de lotes entre B y C (capa 10, T-019 · ADR-003 · REQ-027)
+    |--------------------------------------------------------------------------
+    | El hash de cada evento (T-003) prueba integridad; la firma del lote prueba
+    | qué nodo lo envió. La llave privada vive en storage/keys/<nodo>.key (nunca
+    | en git; se genera con sard:llaves) y las públicas en .env. Con
+    | SARD_FIRMA=false no se firma ni se verifica nada.
+    */
+
+    'firma' => [
+        'habilitada' => env('SARD_FIRMA', false),
+        'llave_privada' => env('SARD_LLAVE_PRIVADA', 'storage/keys/'.strtolower(env('NODE_ROLE', 'A')).'.key'),
+        'pub' => [
+            'B' => env('SARD_PUB_B'),
+            'C' => env('SARD_PUB_C'),
+        ],
+    ],
+
 ];

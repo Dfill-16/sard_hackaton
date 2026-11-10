@@ -3,6 +3,7 @@
 namespace App\Agents\A5;
 
 use App\Jobs\ProcesarReporte;
+use App\Sard\Firma\Firmador;
 use App\Sard\Log\EventLog;
 use App\Sard\Nodo\EstadoNodo;
 use App\Sard\Support\Tiempo;
@@ -225,6 +226,16 @@ final class Resiliencia
             }
 
             $eventos = $respuesta->json('eventos') ?? [];
+
+            // T-019: la respuesta del líder viene firmada; si la firma no verifica, se
+            // rechaza el lote completo y no se ingiere nada.
+            if (config('sard.firma.habilitada')
+                && ! Firmador::verificar($eventos, $respuesta->json('firma'), $respuesta->json('nodo'))) {
+                Log::error('A5: lote replicado rechazado, firma del líder inválida.');
+
+                break;
+            }
+
             foreach ($eventos as $evento) {
                 if ($this->ingerirSeguro($evento)) {
                     $insertados++;
@@ -286,7 +297,23 @@ final class Resiliencia
     {
         $total = ['insertados' => 0, 'ignorados' => 0];
         foreach (array_chunk($eventos, self::LOTE_UNION) as $lote) {
-            $respuesta = $this->pedir('post', $destino, '/api/eventos/lote', ['eventos' => $lote]);
+            $datos = ['eventos' => $lote];
+
+            // T-019: el lote lleva la firma de este nodo; el líder la verifica antes de ingerir.
+            if (config('sard.firma.habilitada')) {
+                try {
+                    $datos['nodo'] = $this->nodo();
+                    $datos['firma'] = Firmador::firmar($lote);
+                } catch (Throwable $excepcion) {
+                    // Sin llave privada no hay lote válido que enviar (el líder lo rechazaría):
+                    // se registra y se reintenta en el próximo ciclo, sin matar el demonio.
+                    Log::error('A5: no se pudo firmar el lote de unión.', ['error' => $excepcion->getMessage()]);
+
+                    return null;
+                }
+            }
+
+            $respuesta = $this->pedir('post', $destino, '/api/eventos/lote', $datos);
             if ($respuesta === null || ! $respuesta->successful()) {
                 return null;
             }

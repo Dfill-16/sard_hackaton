@@ -3,12 +3,14 @@
 namespace App\Node\B;
 
 use App\Agents\A5\Resiliencia;
+use App\Sard\Firma\Firmador;
 use App\Sard\Log\EventLog;
 use App\Sard\Nodo\EstadoNodo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -76,10 +78,20 @@ final class ControlController
 
         $limite = max(0, min(5000, (int) $request->query('limite', 500)));
 
-        return response()->json([
-            'eventos' => $limite === 0 ? [] : $this->log->desde(array_map('intval', $desde), $limite),
+        $eventos = $limite === 0 ? [] : $this->log->desde(array_map('intval', $desde), $limite);
+        $respuesta = [
+            'eventos' => $eventos,
             'seq_max_por_origen' => (object) $this->log->seqMaxPorOrigen(),
-        ]);
+        ];
+
+        // T-019: con SARD_FIRMA, la respuesta lleva la firma del nodo que la sirve y
+        // el que la pide la verifica antes de ingerir (Resiliencia::replicar).
+        if (config('sard.firma.habilitada')) {
+            $respuesta['nodo'] = $this->resiliencia->nodo();
+            $respuesta['firma'] = Firmador::firmar($eventos);
+        }
+
+        return response()->json($respuesta);
     }
 
     /** POST /api/eventos/lote {eventos: [...]} · unión: INSERT OR IGNORE por UUID, hash verificado. */
@@ -91,6 +103,18 @@ final class ControlController
         $eventos = is_array($cuerpo) ? ($cuerpo['eventos'] ?? null) : null;
         if (! is_array($eventos)) {
             return response()->json(['error' => 'lote_invalido', 'detalle' => 'Se espera {"eventos": [...]}.'], 422);
+        }
+
+        // T-019: con SARD_FIRMA el lote debe venir firmado por el nodo emisor; si un solo
+        // byte no cuadra, se rechaza el lote completo y no se ingiere nada.
+        if (config('sard.firma.habilitada')) {
+            $nodoEmisor = $cuerpo['nodo'] ?? null;
+            $firmaLote = $cuerpo['firma'] ?? null;
+            if (! Firmador::verificar($eventos, is_string($firmaLote) ? $firmaLote : null, is_string($nodoEmisor) ? $nodoEmisor : null)) {
+                Log::error('Lote de unión rechazado: firma inválida.', ['nodo' => $nodoEmisor, 'eventos' => count($eventos)]);
+
+                return response()->json(['error' => 'firma_invalida', 'detalle' => 'La firma del lote no corresponde al nodo emisor.'], 401);
+            }
         }
 
         $insertados = 0;
