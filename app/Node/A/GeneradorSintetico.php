@@ -118,9 +118,51 @@ final class GeneradorSintetico
         return $payloads;
     }
 
-    private function reporte(int $deviceId, int $tipo, ?float $lat, ?float $lon, int $personas, ?string $texto = null): string
+    /**
+     * Escenario de demostración del tablero: un caso por cada cosa que el coordinador debe ver.
+     *
+     * - P1 corroborado (2 dispositivos): personas atrapadas en Chipre → bomberos, ambulancia pendiente.
+     * - P1 médico en Versalles (dificultad respiratoria) → ambulancia.
+     * - P1 incendio con explosión en Delicias.
+     * - Brecha: heridos en La Enea; su ambulancia está ocupada y la disponible más cercana a > 3 km.
+     * - Contradicción: dos dispositivos en Milán dicen 2 y 8 personas.
+     * - Sin ubicación: persona atrapada sin GPS.
+     *
+     * @return array<int, string>
+     */
+    public function demostracion(): array
     {
-        [$claves, $textos] = self::PLANTILLAS[$tipo];
+        [$a, $b, $c, $d, $e, $f, $g, $h] = $this->dispositivos(8);
+        $atrapadas = ['atrapada', 'herido', 'derrumbe'];
+
+        return [
+            $this->enBarrio($a, 1, 'Chipre', 40, 3, 'dos personas atrapadas bajo una pared y un herido', $atrapadas),
+            $this->enBarrio($b, 1, 'Chipre', 70, 3, 'se cayo la pared, hay gente atrapada', $atrapadas),
+            $this->enBarrio($c, 3, 'Versalles', 60, 1, 'senor mayor no puede respirar', ['respiratoria']),
+            $this->enBarrio($d, 2, 'Delicias', 80, 5, 'exploto un cilindro y hay fuego en la casa', ['incendio', 'explosion']),
+            $this->enBarrio($e, 3, 'La Enea', 50, 2, 'accidente de moto, dos heridos en la via', ['herido']),
+            $this->enBarrio($f, 4, 'Milán', 30, 2, 'deslizamiento tapo una casa', ['deslizamiento']),
+            $this->enBarrio($g, 4, 'Milán', 60, 8, 'la tierra cayo sobre varias casas', ['deslizamiento']),
+            $this->reporte($h, 1, null, null, 2, 'estamos atrapados en el sotano, no se la direccion exacta', ['atrapada']),
+        ];
+    }
+
+    /** @param  array<int, string>  $claves */
+    private function enBarrio(int $deviceId, int $tipo, string $barrio, int $metros, int $personas, string $texto, array $claves): string
+    {
+        [$lat, $lon] = self::BARRIOS[$barrio];
+        [$lat, $lon] = $this->desplazar($lat, $lon, $metros);
+
+        return $this->reporte($deviceId, $tipo, $lat, $lon, $personas, $texto, $claves);
+    }
+
+    /**
+     * @param  array<int, string>|null  $claves  banderas; por defecto las de la plantilla del tipo
+     */
+    private function reporte(int $deviceId, int $tipo, ?float $lat, ?float $lon, int $personas, ?string $texto = null, ?array $claves = null): string
+    {
+        [$clavesPlantilla, $textos] = self::PLANTILLAS[$tipo];
+        $claves ??= $clavesPlantilla;
         $banderas = 0;
         foreach ($claves as $clave) {
             $banderas |= 1 << Banderas::bitDeClave($clave);

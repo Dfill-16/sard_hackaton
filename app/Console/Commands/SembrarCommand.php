@@ -18,6 +18,7 @@ final class SembrarCommand extends Command
         {--semilla=42 : Semilla de la generación}
         {--rumor : Agrega 30 reportes de un solo dispositivo}
         {--masivo : Agrega 6 dispositivos a ≤ 200 m con el mismo tipo}
+        {--demo : Agrega el escenario del tablero (P1, brecha, contradicción, sin ubicación)}
         {--sin-ubicacion=0.1 : Fracción de reportes dispersos sin GPS}';
 
     protected $description = 'Genera reportes sintéticos (datos de demostración) y los envía a POST /api/reportes del Nodo A';
@@ -28,6 +29,9 @@ final class SembrarCommand extends Command
         $dispositivos = $this->option('dispositivos') !== null ? (int) $this->option('dispositivos') : null;
 
         $payloads = $generador->dispersos((int) $this->argument('n'), $dispositivos, (float) $this->option('sin-ubicacion'));
+        if ($this->option('demo')) {
+            $payloads = [...$generador->demostracion(), ...$payloads];
+        }
         if ($this->option('masivo')) {
             $payloads = [...$payloads, ...$generador->masivo()];
         }
