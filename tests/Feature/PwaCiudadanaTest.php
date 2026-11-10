@@ -27,6 +27,30 @@ final class PwaCiudadanaTest extends TestCase
             ->assertDontSee('teléfono de contacto');
     }
 
+    public function test_accesibilidad_bandera_vulnerable_explicita_dictado_y_voz(): void
+    {
+        $this->withoutVite();
+
+        $this->get('/pwa')->assertOk()
+            ->assertSee('Persona vulnerable (discapacidad, adulto mayor, niño)')
+            ->assertSee('alternarDictado()', false)
+            ->assertSee('aria-describedby="ayuda-nota"', false)
+            ->assertSee('Leer avisos en voz alta')
+            ->assertSee('class="sr-only" role="status" aria-live="polite"', false);
+    }
+
+    public function test_al_guardar_se_muestra_una_confirmacion_accesible_que_no_cancela_el_reporte(): void
+    {
+        $this->withoutVite();
+
+        $this->get('/pwa')->assertOk()
+            ->assertSee('x-ref="dialogoConfirmacion"', false)
+            ->assertSee('aria-labelledby="titulo-confirmacion" aria-describedby="texto-confirmacion"', false)
+            ->assertSee('Reporte guardado')
+            ->assertSee('Si puedes llamar, marca 123.')
+            ->assertSee('Entendido');
+    }
+
     public function test_banderas_criticas_aparecen_primero(): void
     {
         $this->withoutVite();

@@ -22,7 +22,7 @@ const VISTAS = [
     'resources/views/pwa/index.blade.php',
     'resources/views/campo/index.blade.php',
 ];
-const SCRIPTS = ['resources/js/tablero/app.js', 'resources/js/pwa/app.js', 'resources/js/campo/app.js'];
+const SCRIPTS = ['resources/js/tablero/app.js', 'resources/js/pwa/app.js', 'resources/js/pwa/accesibilidad.js', 'resources/js/campo/app.js'];
 
 /** Frases marcadas en el código; omite las que Blade rellena en el servidor ({{ … }}). */
 function frasesMarcadas() {

@@ -19,6 +19,12 @@ html {
     background: var(--sard-background);
 }
 
+/* Foco visible y grueso para teclado, switch de acceso y lectores de pantalla con navegación por foco. */
+:focus-visible {
+    outline: 3px solid var(--sard-accent);
+    outline-offset: 2px;
+}
+
 body {
     padding-bottom: env(safe-area-inset-bottom);
 }

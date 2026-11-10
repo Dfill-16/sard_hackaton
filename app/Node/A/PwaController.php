@@ -22,6 +22,14 @@ final class PwaController
         0 => ['nombre' => 'Otra emergencia', 'icono' => 'otro'],
     ];
 
+    /**
+     * Banderas con un nombre más explícito para el ciudadano (solo texto: el bit no cambia).
+     * «Vulnerable» nombra a quién incluye para que se marque cuando hay alguien con discapacidad.
+     */
+    public const NOMBRES_CIUDADANOS = [
+        'vulnerable' => 'Persona vulnerable (discapacidad, adulto mayor, niño)',
+    ];
+
     public function __invoke(): View
     {
         $tipos = [];
@@ -32,7 +40,8 @@ final class PwaController
         $banderas = collect(Banderas::CATALOGO)
             ->map(fn (array $bandera, int $bit): array => [
                 'bit' => $bit,
-                'nombre' => mb_strtoupper(mb_substr($bandera['etiqueta'], 0, 1)).mb_substr($bandera['etiqueta'], 1),
+                'nombre' => self::NOMBRES_CIUDADANOS[$bandera['clave']]
+                    ?? mb_strtoupper(mb_substr($bandera['etiqueta'], 0, 1)).mb_substr($bandera['etiqueta'], 1),
                 'critica' => $bandera['critica'],
             ])
             ->sortByDesc('critica')

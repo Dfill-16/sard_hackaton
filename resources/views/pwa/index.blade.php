@@ -52,8 +52,10 @@
     </header>
 
     <main class="flex grow flex-col gap-8 px-4 pt-5 pb-6">
-        <p x-show="aviso" x-cloak x-text="aviso" role="status" aria-live="polite"
+        <p x-show="aviso && !confirmacion" x-cloak x-text="aviso" role="status" aria-live="polite"
             class="flex items-start gap-2 rounded-md bg-healthy/12 px-3 py-2.5 text-sm text-foreground"></p>
+        {{-- Lectores de pantalla: anuncia cuando la central confirma un reporte, aunque no esté a la vista --}}
+        <p class="sr-only" role="status" aria-live="polite" x-text="anuncio"></p>
 
         {{-- Toque 1: tipo. Toque final: enviar. Banderas, personas y nota son opcionales. --}}
         <form @submit.prevent="enviar()" class="flex flex-col gap-6" aria-labelledby="titulo-tipo">
@@ -112,15 +114,36 @@
                     </div>
                 </div>
 
+                {{-- Nota corta: escrita o dictada. El dictado solo convierte la voz en texto; el audio no se envía. --}}
                 <div class="flex flex-col gap-2">
-                    <button type="button" x-show="!verDetalles" @click="verDetalles = true; $nextTick(() => $refs.nota.focus())"
-                        class="min-h-11 self-start rounded-sm text-sm font-medium underline underline-offset-4" x-t>Agregar una nota corta (opcional)</button>
+                    <div class="flex flex-wrap items-center gap-2" x-show="!verDetalles">
+                        <button type="button" @click="verDetalles = true; $nextTick(() => $refs.nota.focus())"
+                            class="min-h-11 rounded-sm text-sm font-medium underline underline-offset-4" x-t>Agregar una nota corta (opcional)</button>
+                        <button type="button" x-show="puedeDictar" @click="alternarDictado()"
+                            class="ml-auto inline-flex min-h-11 items-center gap-2 rounded-full border border-border px-4 text-sm font-medium active:bg-surface-2">
+                            @include('pwa.partials.icono', ['nombre' => 'microfono', 'clase' => 'size-5'])
+                            <span x-t>Dictar</span>
+                        </button>
+                    </div>
                     <div x-show="verDetalles" x-cloak class="flex flex-col gap-1.5">
-                        <label for="nota" class="text-base font-semibold" x-t>Nota corta</label>
+                        <div class="flex items-center justify-between gap-2">
+                            <label for="nota" class="text-base font-semibold" x-t>Nota corta</label>
+                            <button type="button" x-show="puedeDictar" @click="alternarDictado()" :aria-pressed="dictando"
+                                :class="dictando ? 'border-accent bg-accent text-white' : 'border-border active:bg-surface-2'"
+                                class="inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium">
+                                @include('pwa.partials.icono', ['nombre' => 'microfono', 'clase' => 'size-5'])
+                                <span x-text="dictando ? $t('Escuchando… toca para terminar') : $t('Dictar')">Dictar</span>
+                            </button>
+                        </div>
                         <textarea id="nota" x-ref="nota" x-model="texto" @input="limitarTexto()" rows="3" maxlength="140"
+                            aria-describedby="ayuda-nota"
                             placeholder="Ej.: hay dos personas atrapadas en la casa azul" x-t:placeholder
                             class="w-full rounded-md border border-border bg-surface p-3 text-base placeholder:text-muted focus:border-border-hover"></textarea>
-                        <p class="text-right font-mono text-xs text-muted" x-text="`${bytesDelTexto} / 140 B`"></p>
+                        <p class="text-sm text-degraded" role="alert" x-show="errorDictado" x-text="errorDictado"></p>
+                        <div class="flex items-start justify-between gap-3 text-xs text-muted">
+                            <p id="ayuda-nota" x-t>Máximo unos 140 caracteres. También puedes usar el micrófono de tu teclado.</p>
+                            <p class="shrink-0 font-mono" aria-hidden="true" x-text="`${bytesDelTexto} / 140 B`"></p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -142,6 +165,11 @@
                 <span class="text-sm font-normal text-muted" x-text="pendientes ? $t(':n por confirmar', { n: pendientes }) : (registros.length ? $t('todos recibidos') : '')"></span>
             </h2>
             <p class="text-sm text-muted" x-show="registros.length === 0" x-t>Aún no has enviado reportes desde este teléfono.</p>
+            <button type="button" x-show="puedeHablar && registros.length > 0" x-cloak @click="leerUltimoReporte()"
+                class="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-border px-4 text-base font-medium active:bg-surface-2">
+                @include('pwa.partials.icono', ['nombre' => 'altavoz', 'clase' => 'size-5'])
+                <span x-t>Leer en voz alta mi último reporte</span>
+            </button>
             <ul class="flex flex-col gap-2">
                 <template x-for="r in registros" :key="r.uuid">
                     <li class="flex flex-col gap-1.5 rounded-lg border border-border bg-surface p-3">
@@ -156,10 +184,10 @@
                             <span x-text="textoEstado(r)"></span>
                         </p>
                         <p class="flex flex-wrap gap-x-3 font-mono text-[11px] text-muted">
-                            <span x-text="`${r.bytes_n} B (JSON ${r.json_n} B)`"></span>
+                            <span aria-hidden="true" x-text="`${r.bytes_n} B (JSON ${r.json_n} B)`"></span>
                             <span x-show="r.sin_ubicacion" x-t>sin ubicación</span>
                             <span x-show="r.repeticiones > 0" x-text="$t('actualizado ×:n', { n: r.repeticiones })"></span>
-                            <span x-text="r.uuid.slice(0, 8)"></span>
+                            <span aria-hidden="true" x-text="r.uuid.slice(0, 8)"></span>
                         </p>
                     </li>
                 </template>
@@ -173,6 +201,17 @@
             <span><span x-t>Anónimo: no pedimos nombre, teléfono ni documento. Este teléfono se identifica solo con un código al azar</span>
                 <span class="font-mono text-foreground" x-text="deviceId ? deviceId.toString(16).padStart(8, '0') : '········'"></span>.</span>
         </p>
+        <button type="button" role="switch" x-show="puedeHablar" :aria-checked="leerEnVoz" @click="alternarVoz()"
+            class="flex min-h-11 items-center justify-between gap-3 rounded-md border border-border px-3 text-sm text-foreground">
+            <span class="inline-flex items-center gap-2">
+                @include('pwa.partials.icono', ['nombre' => 'altavoz', 'clase' => 'size-4'])
+                <span x-t>Leer avisos en voz alta</span>
+            </span>
+            <span class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full"
+                :class="leerEnVoz ? 'bg-accent' : 'bg-surface-2 ring-1 ring-border'">
+                <span class="inline-block size-5 rounded-full bg-foreground" :class="leerEnVoz ? 'translate-x-5.5' : 'translate-x-0.5'"></span>
+            </span>
+        </button>
         <button type="button" role="switch" :aria-checked="simularSinRed" @click="alternarSinRed()"
             class="flex min-h-11 items-center justify-between gap-3 rounded-md border border-border px-3 text-sm text-foreground">
             <span><span x-t>Simular sin red</span> <span class="text-muted">(demo)</span></span>
@@ -182,6 +221,44 @@
             </span>
         </button>
     </footer>
+
+    {{-- Confirmación al guardar: grande, en el centro y con el estado en vivo. El reporte ya quedó guardado;
+         cerrarla (botón o Esc) no cancela nada. No se cierra sola para dar tiempo a quien lee despacio. --}}
+    <dialog x-ref="dialogoConfirmacion" @close="confirmacion = null"
+        aria-labelledby="titulo-confirmacion" aria-describedby="texto-confirmacion"
+        class="m-auto w-[min(92vw,26rem)] rounded-xl border border-border bg-surface p-0 text-foreground backdrop:bg-black/70">
+        <div class="flex flex-col items-center gap-4 px-5 pt-6 pb-5 text-center">
+            <span class="inline-flex size-16 items-center justify-center rounded-full"
+                :class="registroConfirmado?.estado === 'confirmado' ? 'bg-healthy/15 text-healthy' : 'bg-accent/15 text-accent'">
+                <span x-show="registroConfirmado?.estado === 'confirmado'">@include('pwa.partials.icono', ['nombre' => 'check', 'clase' => 'size-9'])</span>
+                <span x-show="registroConfirmado?.estado !== 'confirmado'">@include('pwa.partials.icono', ['nombre' => 'envio', 'clase' => 'size-8'])</span>
+            </span>
+
+            <div class="flex flex-col gap-1.5">
+                <h2 id="titulo-confirmacion" class="text-2xl font-semibold tracking-tight"
+                    x-text="confirmacion?.repetido ? $t('Reporte actualizado') : $t('Reporte guardado')">Reporte guardado</h2>
+                <p class="text-base font-medium" x-show="registroConfirmado" x-text="registroConfirmado ? nombreTipo(registroConfirmado.tipo) : ''"></p>
+                <p id="texto-confirmacion" class="text-base text-muted" x-text="aviso"></p>
+            </div>
+
+            <p class="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-base font-semibold" role="status" aria-live="polite"
+                :class="registroConfirmado?.estado === 'confirmado' ? 'bg-healthy/12 text-healthy' : 'bg-degraded/12 text-degraded'">
+                <span x-text="registroConfirmado ? textoEstado(registroConfirmado) : ''"></span>
+            </p>
+
+            <p class="text-sm text-muted" x-t>Si estás en peligro, ponte a salvo primero. Si puedes llamar, marca 123.</p>
+
+            <div class="flex w-full flex-col gap-2">
+                <button type="button" x-show="puedeHablar" @click="leerReporte(confirmacion?.uuid)"
+                    class="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg border border-border text-base font-medium active:bg-surface-2">
+                    @include('pwa.partials.icono', ['nombre' => 'altavoz', 'clase' => 'size-5'])
+                    <span x-t>Leer en voz alta</span>
+                </button>
+                <button type="button" @click="cerrarConfirmacion()" autofocus
+                    class="inline-flex min-h-14 w-full items-center justify-center rounded-lg bg-foreground text-lg font-semibold text-background" x-t>Entendido</button>
+            </div>
+        </div>
+    </dialog>
 </div>
 </body>
 </html>
